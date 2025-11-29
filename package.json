@@ -13,9 +13,9 @@
     "type": "git",
     "url": "git+https://github.com/lelia/dependency-scanner.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["dependency", "security", "vulnerability"],
+  "author": "lelia",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/lelia/dependency-scanner/issues"
