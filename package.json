@@ -1,0 +1,21 @@
+{
+  "name": "dependency-scanner",
+  "version": "1.0.0",
+  "description": "A tool to scan dependency manifest files and report known vulnerabilities.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lelia/dependency-scanner.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lelia/dependency-scanner/issues"
+  },
+  "homepage": "https://github.com/lelia/dependency-scanner#readme"
+}
