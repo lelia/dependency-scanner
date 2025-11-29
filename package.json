@@ -17,5 +17,10 @@
   "bugs": {
     "url": "https://github.com/lelia/dependency-scanner/issues"
   },
-  "homepage": "https://github.com/lelia/dependency-scanner#readme"
+  "homepage": "https://github.com/lelia/dependency-scanner#readme",
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
 }
