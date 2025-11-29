@@ -2,8 +2,11 @@
   "name": "dependency-scanner",
   "version": "1.0.0",
   "description": "A tool to scan dependency manifest files and report known vulnerabilities.",
-  "main": "index.js",
+  "main": "dist/cli.js",
   "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/cli.ts",
+    "start": "node dist/cli.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
