@@ -20,6 +20,10 @@ export interface OsvVulnerability {
   summary?: string;
 }
 
+interface OsvBatchResponse {
+  results: Array<{ vulns?: OsvVulnerability[] }>;
+}
+
 export async function queryOsv(
   nodes: DependencyNode[],
 ): Promise<Map<string, OsvVulnerability[]>> {
@@ -39,7 +43,7 @@ export async function queryOsv(
     throw new Error(`OSV error: ${response.status}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as OsvBatchResponse;
 
   // Map results back to node IDs
   const results = new Map<string, OsvVulnerability[]>();
