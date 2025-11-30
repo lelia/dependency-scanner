@@ -21,6 +21,7 @@ const SUPPORTED_FILES = [
   "Pipfile.lock",
 ];
 
+// TODO: Consider reworking as filetypes continue to grow (factory pattern?)
 export function parse(filePath: string): DependencyGraph {
   // npm ecosystem
   if (filePath.endsWith("package-lock.json")) {
