@@ -2,38 +2,68 @@
 /**
  * CLI entrypoint for the dependency-scanner tool.
  *
- * Basic flow:
- * 1. Parse lockfile
- * 2. Query OSV API
- * 3. Build report
- * 4. Generate output
- *
- * TODO:
- * - Add proper graph traversal
- * - Improve console output formatting
- * - Add JSON file output to report
+ * Usage: npx dependency-scanner <lockfile-path>
+ * Default: package-lock.json in the current working directory
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import { parseLockfile } from "./lockfile";
-import { queryOsv } from "./osv";
-import { buildReport } from "./report";
+import { getAllDependencies } from "./traverse";
+import { checkVulnerabilities } from "./osv";
+import { generateReport, Report } from "./report";
 
 async function main() {
-  const lockfilePath = process.argv[2] ?? "./package-lock.json";
+  const lockfilePath = process.argv[2] ?? path.join(process.cwd(), "package-lock.json");
 
   console.log(`Scanning: ${lockfilePath}`);
 
   const graph = parseLockfile(lockfilePath);
-  console.log(`Found ${graph.nodes.size} packages`);
+  const deps = getAllDependencies(graph);
+  console.log(`Found ${deps.length} dependencies (${graph.roots.length} direct)`);
 
-  const vulnMap = await queryOsv([...graph.nodes.values()]);
-  const report = buildReport(graph, vulnMap);
+  console.log("Checking for known vulnerabilities...");
+  const vulns = await checkVulnerabilities(deps);
 
-  console.log(`\nTotal: ${report.summary.totalDependencies}`);
-  console.log(`Vulnerable: ${report.summary.vulnerableDependencies}`);
+  const report = generateReport(graph, vulns);
+  printSummary(report);
+
+  const outputPath = path.join(process.cwd(), "report.json");
+  fs.writeFileSync(outputPath, JSON.stringify(report, null, 2));
+  console.log(`\nFull report: ${outputPath}`);
+}
+
+/**
+ * Print summary of the report to the console.
+ */
+function printSummary(report: Report) {
+  const { summary, findings } = report;
+  // Calculate % of vulnerable packages in manifest
+  const percent = summary.totalDependencies > 0
+    ? ((summary.vulnerableDependencies / summary.totalDependencies) * 100).toFixed(1)
+    : "0.0";
+
+  console.log("\n" + "─".repeat(50));
+  console.log(`Dependencies: ${summary.totalDependencies}  |  Vulnerable: ${summary.vulnerableDependencies} (${percent}%)`);
+  console.log("─".repeat(50));
+
+  const vulnerable = findings.filter((f) => f.vulnerabilities.length > 0);
+
+  if (vulnerable.length === 0) {
+    console.log("\n✓ No known vulnerabilities found");
+    return;
+  }
+
+  console.log("\nVulnerable packages:\n");
+  for (const finding of vulnerable) {
+    const vulnIds = finding.vulnerabilities.map((v) => v.id).join(", ");
+    console.log(`  ${finding.name}@${finding.version} (${finding.dependencyType})`);
+    console.log(`    └─ ${finding.vulnerabilities.length} vuln(s): ${vulnIds}`);
+  }
 }
 
 main().catch((err) => {
-  console.error("Failed:", err.message);
+  console.error("\n✗ Scan failed:", err.message);
+  if (process.env.DEBUG) console.error(err.stack);
   process.exit(1);
 });
