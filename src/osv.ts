@@ -1,14 +1,7 @@
 /**
  * API Client for OSV (Open Source Vulnerability) database.
  * 
- * Refs:
- * - https://google.github.io/osv.dev/api/
- * - https://google.github.io/osv.dev/post-v1-querybatch/
- * 
- * TODO:
- * - Add deduplication before querying
- * - Handle batch size limits (1000 max)
- * - Better error handling
+ * Ref: https://google.github.io/osv.dev/post-v1-querybatch/
  */
 
 import fetch from "node-fetch";

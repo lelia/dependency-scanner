@@ -13,7 +13,7 @@ export function getAllDependencies(graph: DependencyGraph): DependencyNode[] {
     visited.add(nodeId);
 
     const node = graph.nodes.get(nodeId);
-    if (!node) return; // Dangling reference (e.g., optional dep not installed)
+    if (!node) return; // Dangling reference (eg. optional deps not installed in the lockfile)
 
     result.push(node);
     for (const childId of node.dependencies) {
