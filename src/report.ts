@@ -1,10 +1,5 @@
 /**
- * Basic report generator, limited to console output.
- * 
- * TODO:
- * - Add graph traversal to collect all nodes
- * - Include direct/transitive info in output
- * - Implement JSON file output formatting
+ * Generate report to summarize dependency and vulnerability findings.
  */
 
 import { DependencyGraph, DependencyType } from "./types";
