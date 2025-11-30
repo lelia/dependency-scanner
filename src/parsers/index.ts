@@ -1,21 +1,26 @@
 /**
- * Routes to parser based on package manifest and lockfile (if any).
+ * Routes to parser based on package manifest and lockfile type.
  *
  * Ecosystems supported: npm (Node.js), pypi (Python)
- * Filetypes supported: package.json, package-lock.json (v2/v3), yarn.lock (v1/v2)
  */
 
 import { DependencyGraph } from "../types";
 import { parsePackageLock, parsePackageJson, parseYarnLock } from "./npm";
+import { parseRequirements, parsePoetryLock, parsePipfileLock } from "./pypi";
 
 const SUPPORTED_FILES = [
+  // npm filetypes
   "package-lock.json",
   "package.json",
   "yarn.lock",
+  // pypi filetypes
+  "requirements.txt",
+  "poetry.lock",
+  "Pipfile.lock",
 ];
 
 export function parse(filePath: string): DependencyGraph {
-  // Route to npm ecosystem parsers
+  // npm ecosystem
   if (filePath.endsWith("package-lock.json")) {
     return parsePackageLock(filePath);
   }
@@ -24,6 +29,17 @@ export function parse(filePath: string): DependencyGraph {
   }
   if (filePath.endsWith("yarn.lock")) {
     return parseYarnLock(filePath);
+  }
+
+  // pypi ecosystem
+  if (filePath.endsWith("requirements.txt")) {
+    return parseRequirements(filePath);
+  }
+  if (filePath.endsWith("poetry.lock")) {
+    return parsePoetryLock(filePath);
+  }
+  if (filePath.endsWith("Pipfile.lock")) {
+    return parsePipfileLock(filePath);
   }
 
   throw new Error(
