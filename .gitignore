@@ -1,4 +1,11 @@
-.env
-.DS_Store
+# Build output
 dist/
+
+# Dependencies
 node_modules/
+
+# System files
+.DS_Store
+
+# Generated files
+report.json
