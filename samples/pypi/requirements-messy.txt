@@ -1,0 +1,31 @@
+# Messy requirements file with various formats
+
+# Pinned versions
+requests==2.31.0
+Flask==2.3.0
+
+# Version ranges (we use lower bound)
+pandas>=2.0.0
+numpy~=1.24.0
+
+# Bare package name (should be skipped)
+somepackage
+
+# Comments and blank lines should be ignored
+
+# Include directive (should be skipped)
+-r base.txt
+
+# Editable install (should be skipped)
+-e git+https://github.com/user/repo.git#egg=mypackage
+
+# URL-based (should be skipped)
+https://example.com/package.whl
+
+# Package with extras (we should still parse the name/version)
+requests[security]==2.31.0
+
+# Underscores and dots in names (PEP 503 normalization)
+some_package==1.0.0
+some.other.package==2.0.0
+
