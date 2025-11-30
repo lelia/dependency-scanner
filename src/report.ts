@@ -7,43 +7,44 @@
  * - Implement JSON file output formatting
  */
 
-import { DependencyGraph } from "./types";
-import { OsvVulnerability } from "./osv";
+import { DependencyGraph, DependencyType } from "./types";
+import { Vulnerability } from "./osv";
+import { getAllDependencies } from "./traverse";
 
-export interface ScanReport {
+export interface Finding {
+  id: string;
+  name: string;
+  version: string;
+  dependencyType: DependencyType;
+  vulnerabilities: Vulnerability[];
+}
+
+export interface Report {
   summary: {
     totalDependencies: number;
     vulnerableDependencies: number;
   };
-  findings: Array<{
-    id: string;
-    name: string;
-    version: string;
-    vulnerabilities: OsvVulnerability[];
-  }>;
+  findings: Finding[];
 }
 
-export function buildReport(
+export function generateReport(
   graph: DependencyGraph,
-  vulnMap: Map<string, OsvVulnerability[]>,
-): ScanReport {
-  const findings = [...graph.nodes.values()].map((node) => ({
-    id: node.id,
-    name: node.name,
-    version: node.version,
-    vulnerabilities: vulnMap.get(node.id) ?? [],
+  vulns: Map<string, Vulnerability[]>,
+): Report {
+  const deps = getAllDependencies(graph);
+
+  const findings: Finding[] = deps.map((dep) => ({
+    id: dep.id,
+    name: dep.name,
+    version: dep.version,
+    dependencyType: dep.dependencyType,
+    vulnerabilities: vulns.get(dep.id) ?? [],
   }));
 
-  const vulnerableDependencies = findings.filter(
-    (f) => f.vulnerabilities.length > 0
-  ).length;
+  const vulnerableDependencies = findings.filter((f) => f.vulnerabilities.length > 0).length;
 
   return {
-    summary: {
-      totalDependencies: findings.length,
-      vulnerableDependencies,
-    },
+    summary: { totalDependencies: findings.length, vulnerableDependencies },
     findings,
   };
 }
-
