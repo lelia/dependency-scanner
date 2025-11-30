@@ -1,7 +1,9 @@
 /**
  * Routes to parser based on package manifest and lockfile type.
  *
- * Ecosystems supported: npm (Node.js), pypi (Python)
+ * Current ecosystems supported: 
+ * - NPM (Node.js)
+ * - PyPI (Python)
  */
 
 import { DependencyGraph } from "../types";
