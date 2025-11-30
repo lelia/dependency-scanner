@@ -29,6 +29,7 @@
   },
   "homepage": "https://github.com/lelia/dependency-scanner#readme",
   "dependencies": {
+    "@octokit/rest": "^22.0.1",
     "node-fetch": "^2.7.0"
   },
   "devDependencies": {
