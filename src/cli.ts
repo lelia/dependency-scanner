@@ -2,6 +2,7 @@
 /**
  * CLI entrypoint for the dependency-scanner tool.
  *
+ * Setup: npm install && npm run build
  * Usage: npx dependency-scanner <lockfile-path>
  * Default: package-lock.json in the current working directory
  */
