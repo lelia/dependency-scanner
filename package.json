@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A tool to scan dependency manifest files and report known vulnerabilities.",
   "main": "dist/cli.js",
+  "bin": {
+    "dependency-scanner": "dist/cli.js"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "ts-node src/cli.ts",
