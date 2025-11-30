@@ -1,7 +1,7 @@
 /**
- * Unit tests for parsers.
+ * Unit tests for filetype parsers and routing logic.
  * 
- * Usage: npm test
+ * Usage: npm run test
  */
 
 import { test, describe } from "node:test";
