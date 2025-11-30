@@ -1,14 +1,9 @@
 /**
- * Basic file parser, limited to package-lock.json (v2/v3 format).
- * 
- * TODO:
- * - Add support for npm package.json
- * - Add support for lockfile formats (eg. yarn.lock)
- * - Add support for python requirements.txt
+ * Parser for package-lock.json (v2/v3 format, npm v7+).
  */
 
 import fs from "node:fs";
-import { DependencyGraph, DependencyNode } from "./types";
+import { DependencyGraph, DependencyNode } from "../types";
 
 interface PackageLock {
   lockfileVersion?: number;
@@ -58,7 +53,7 @@ function resolvePackage(
   return packages[`node_modules/${depName}`] ?? null;
 }
 
-export function parseLockfile(lockfilePath: string): DependencyGraph {
+export function parsePackageLock(lockfilePath: string): DependencyGraph {
   const raw = fs.readFileSync(lockfilePath, "utf-8");
   const lockfile = JSON.parse(raw) as PackageLock;
 
@@ -84,7 +79,7 @@ export function parseLockfile(lockfilePath: string): DependencyGraph {
     if (!name) continue;
 
     const id = makeNodeId(name, entry.version);
-    if (nodes.has(id)) continue; // Dedupe (eg. hoisting creates multiple paths to the same package)
+    if (nodes.has(id)) continue; // Dedupe (hoisting creates multiple paths to same package)
 
     const isDirect = directDeps.has(name);
     nodes.set(id, {
@@ -126,4 +121,3 @@ export function parseLockfile(lockfilePath: string): DependencyGraph {
 
   return { nodes, roots };
 }
-

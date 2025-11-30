@@ -9,7 +9,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { parseLockfile } from "./lockfile";
+import { parse } from "./parsers";
 import { getAllDependencies } from "./traverse";
 import { checkVulnerabilities } from "./osv";
 import { generateReport, Report } from "./report";
@@ -19,7 +19,7 @@ async function main() {
 
   console.log(`Scanning: ${lockfilePath}`);
 
-  const graph = parseLockfile(lockfilePath);
+  const graph = parse(lockfilePath);
   const deps = getAllDependencies(graph);
   console.log(`Found ${deps.length} dependencies (${graph.roots.length} direct)`);
 
@@ -45,13 +45,13 @@ function printSummary(report: Report) {
     : "0.0";
 
   console.log("\n" + "─".repeat(50));
-  console.log(`Dependencies: ${summary.totalDependencies}  |  Vulnerable: ${summary.vulnerableDependencies} (${percent}%)`);
+  console.log(`Total Dependencies: ${summary.totalDependencies}  |  Vulnerable: ${summary.vulnerableDependencies} (${percent}%)`);
   console.log("─".repeat(50));
 
   const vulnerable = findings.filter((f) => f.vulnerabilities.length > 0);
 
   if (vulnerable.length === 0) {
-    console.log("\n✅ No known vulnerabilities found");
+    console.log("\n✅ No known vulnerabilities found 🎉");
     return;
   }
 
