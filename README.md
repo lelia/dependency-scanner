@@ -1,46 +1,59 @@
-# dependency-scanner
+# 🔍 dependency-scanner
 
-A tool to scan dependency manifest files and report known vulnerabilities.
+A CLI tool to scan dependency manifests and lockfiles for known vulnerabilities.
 
-## Overview
+## Tool overview
 
-1. Parses `package-lock.json` (`npm` v7+ format)
-1. Builds a dependency graph (direct + transitive)
-1. Queries [OSV](https://osv.dev) API for known vulnerabilities
-1. Outputs summary to console + `report.json` file
+- Parses dependency file (lockfile preferred, manifest as fallback)
+- Builds a dependency graph (direct and transitive where available)
+- Queries [OSV.dev](https://osv.dev) for known vulnerabilities ([GHSA](https://github.com/advisories) support TBA)
+- Prints the summary to console and generates a `report.json` file
 
-## Limitations
+## Supported files
 
-- Only supports `package-lock.json` (v2/v3 format)
-- Only queries [OSV](https://osv.dev) (GHSA support TBA)
-- No ability to suppress/ignore specific advisories
+| Ecosystem | Filename | Notes |
+|-----------|------|-------|
+| **NPM** | `package-lock.json` | v2/v3 format (NPM v7+) |
+| **NPM** | `package.json` | Direct deps only, no transitives |
+| **NPM** | `yarn.lock` | v1 (classic) and v2+ (Berry) |
+| **PyPI** | `requirements.txt` | Pinned versions only |
+| **PyPI** | `poetry.lock` | Full dependency tree |
+| **PyPI** | `Pipfile.lock` | Full dependency tree |
 
-## Requirements
+### Known limitations
 
-- [Node.js](https://nodejs.org) v18+ (tested on Node v24.9.0)
+- `package-lock.json` v1 format is not supported (npm v6 and earlier)
+- `package.json` and `requirements.txt` can only show direct dependencies
+- `requirements.txt` with unpinned deps (e.g., `requests>=2.0`) uses range as-is, may not match exact vulnerability ranges
 
-## Setup
+## Getting started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org) v18+ (tested with [v24.9.0](https://nodejs.org/en/blog/release/v24.9.0))
+
+### Usage
 
 ```bash
-npm install # Install dependencies
-npm run build # Build the project
+npm install # Install project dependencies
 
-npx dependency-scanner # Scan ./package-lock by default
-npx dependency-scanner /path/to/lockfile # Scan specific lockfile
+npm run build # Build dependency-scanner tool
+
+npx dependency-scanner # Scan default package-lock.json file
+npx dependency-scanner /path/to/package-lock.json # Scan specific package-lock.json file
+npx dependency-scanner /path/to/requirements.txt # Scan specific requirements.txt file
 ```
 
-## Developing
+### Developing
 
 ```bash
-npm install # Install dependencies
+npm install # Install project dependencies
 
-npm run dev # Scan ./package-lock.json by default
-npm run dev -- /path/to/lockfile # Scan specific lockfile
+npm run dev # Scan default package-lock.json file
+npm run dev -- /path/to/file # Scan specific package manifest file
+
+npm run test # Run unit tests using Node test runner
 ```
-
-## Testing
-
-TBD
 
 ## License
 
