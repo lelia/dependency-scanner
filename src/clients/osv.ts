@@ -1,11 +1,11 @@
 /**
- * API Client for OSV (Open Source Vulnerability) database.
+ * API Client for OSV.dev (Open Source Vulnerability) database.
  * 
  * Ref: https://google.github.io/osv.dev/post-v1-querybatch/
  */
 
 import fetch from "node-fetch";
-import { DependencyNode } from "./types";
+import { DependencyNode } from "../types";
 
 const OSV_BATCH_URL = "https://api.osv.dev/v1/querybatch";
 
