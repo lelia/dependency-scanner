@@ -51,11 +51,11 @@ function printSummary(report: Report) {
   const vulnerable = findings.filter((f) => f.vulnerabilities.length > 0);
 
   if (vulnerable.length === 0) {
-    console.log("\n✓ No known vulnerabilities found");
+    console.log("\n✅ No known vulnerabilities found");
     return;
   }
 
-  console.log("\nVulnerable packages:\n");
+  console.log("\n⚠️ Vulnerable packages:\n");
   for (const finding of vulnerable) {
     const vulnIds = finding.vulnerabilities.map((v) => v.id).join(", ");
     console.log(`  ${finding.name}@${finding.version} (${finding.dependencyType})`);
@@ -64,7 +64,7 @@ function printSummary(report: Report) {
 }
 
 main().catch((err) => {
-  console.error("\n✗ Scan failed:", err.message);
+  console.error("\n🚨 Scan failed:", err.message);
   if (process.env.DEBUG) console.error(err.stack);
   process.exit(1);
 });
