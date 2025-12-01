@@ -43,7 +43,7 @@ export function parseRequirements(filePath: string): DependencyGraph {
           id,
           name,
           version,
-          ecosystem: "pypi",
+          registry: "pypi",
           dependencyType: "direct",
           dependencies: [],
         });
@@ -63,7 +63,7 @@ export function parseRequirements(filePath: string): DependencyGraph {
           id,
           name,
           version: `>=${version}`,
-          ecosystem: "pypi",
+          registry: "pypi",
           dependencyType: "direct",
           dependencies: [],
         });
@@ -175,7 +175,7 @@ export function parsePoetryLock(filePath: string): DependencyGraph {
       id,
       name,
       version: pkg.version,
-      ecosystem: "pypi",
+      registry: "pypi",
       dependencyType: isDirect ? "direct" : "transitive",
       dependencies: [],
     });
@@ -232,7 +232,7 @@ export function parsePipfileLock(filePath: string): DependencyGraph {
       id,
       name,
       version,
-      ecosystem: "pypi",
+      registry: "pypi",
       dependencyType: "direct",
       dependencies: [],
     });
@@ -252,7 +252,7 @@ export function parsePipfileLock(filePath: string): DependencyGraph {
       id,
       name,
       version,
-      ecosystem: "pypi",
+      registry: "pypi",
       dependencyType: "transitive",
       dependencies: [],
     });

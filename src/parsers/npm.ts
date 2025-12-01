@@ -85,7 +85,7 @@ export function parsePackageLock(filePath: string): DependencyGraph {
       id,
       name,
       version: entry.version,
-      ecosystem: "npm",
+      registry: "npm",
       dependencyType: isDirect ? "direct" : "transitive",
       dependencies: [],
     });
@@ -145,7 +145,7 @@ export function parsePackageJson(filePath: string): DependencyGraph {
       id,
       name,
       version,
-      ecosystem: "npm",
+      registry: "npm",
       dependencyType: "direct",
       dependencies: [],
     });
@@ -185,7 +185,7 @@ function parseYarnV1(content: string): DependencyGraph {
             id,
             name,
             version: currentEntry.version!,
-            ecosystem: "npm",
+            registry: "npm",
             dependencyType: "transitive",
             dependencies: [],
           });
@@ -275,7 +275,7 @@ function parseYarnV2(content: string): DependencyGraph {
               id,
               name,
               version: currentVersion,
-              ecosystem: "npm",
+              registry: "npm",
               dependencyType: "transitive",
               dependencies: [],
             });
@@ -311,7 +311,7 @@ function parseYarnV2(content: string): DependencyGraph {
           id,
           name,
           version: currentVersion,
-          ecosystem: "npm",
+          registry: "npm",
           dependencyType: "transitive",
           dependencies: [],
         });
