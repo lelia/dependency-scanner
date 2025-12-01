@@ -45,7 +45,6 @@ When querying both vulnerability databases, results are merged using the followi
 
 #### Ecosystem constraints
 
-- `package-lock.json` v1 format is not currently supported (npm v6 and earlier)
 - `requirements.txt` files containing version ranges (eg., `requests>=2.0`) may not match exact vulnerability ranges
 
 ## Getting started
@@ -81,6 +80,31 @@ npx . --github-token ghp_xxxxxxxxxxxx
 | `[file]` | `./package-lock.json` | Path to lockfile or manifest to scan |
 | `--database-source` | both | Query single DB only: `osv` or `ghsa` |
 | `--github-token` | `$GITHUB_TOKEN` | GitHub PAT for GHSA queries |
+| `--ignore-file` | `.scanignore` | Path to custom ignore file |
+
+### Ignoring vulnerabilities
+
+Create a `.scanignore` file to suppress specific advisories by ID:
+
+```bash
+# .scanignore - one ID per line
+# Comments start with #
+
+GHSA-jf85-cpcp-j695   # Known issue, mitigated
+CVE-2021-23337        # False positive for our use case
+```
+
+**Lookup order:** `--ignore-file` flag → scanned file's directory → current working directory.
+
+```bash
+# Use default .scanignore
+npx .
+
+# Specify custom ignore file
+npx . --ignore-file /path/to/.ci-ignore
+```
+
+> 💡 In the CLI output, "Ignored" counts individual vulnerability instances, while "Vulnerable" counts packages with at least one remaining vulnerability. A package only drops from the vulnerable count when *all* of its vulnerabilities are ignored.
 
 ### CLI examples
 
@@ -99,15 +123,13 @@ Scanning: /path/to/project/package-lock.json
 📦 Found 45 dependencies (5 direct, 40 transitive)
 
 🔍 Checking OSV.dev 🤝 GitHub Security Advisories for known vulnerabilities...
+📋 Loaded 4 ignored advisory ID(s) from .scanignore
 
-──────────────────────────────────────────────────
-Total Dependencies: 45  |  Vulnerable: 2 (4.4%)
-──────────────────────────────────────────────────
+────────────────────────────────────────────────────────────────────────────────
+Total Dependencies: 55  |  Vulnerable: 11 (20.0%)  |  Vulnerabilities Ignored: 4
+────────────────────────────────────────────────────────────────────────────────
 
 ⚠️  Vulnerable packages:
-
-  lodash@4.17.20 (transitive)
-    └─ 1 vuln(s): GHSA-jf85-cpcp-j695
 
   minimist@1.2.5 (direct)
     └─ 1 vuln(s): GHSA-xvch-5gv4-984h
@@ -146,12 +168,13 @@ Sample files for unit testing and general development reference:
 
 ```bash
 tests/fixtures/
-├── npm/        # Node.js lockfile & manifest samples
-├── pypi/       # Python lockfile & manifest samples
-├── osv/        # OSV.dev API response samples
-├── ghsa/       # GHSA GraphQL response samples
-├── reports/    # Sample report.json outputs
-└── malformed/  # Edge cases for error handling
+├── npm/         # Node.js lockfile & manifest samples
+├── pypi/        # Python lockfile & manifest samples
+├── osv/         # OSV.dev API response samples
+├── ghsa/        # GHSA GraphQL response samples
+├── reports/     # Sample report.json outputs
+├── scanignore/  # Sample .scanignore files
+└── malformed/   # Edge cases for error handling
 ```
 
 ### Environment variables
