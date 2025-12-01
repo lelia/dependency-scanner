@@ -2,14 +2,17 @@
   "name": "dependency-scanner",
   "version": "1.0.0",
   "description": "A tool to scan dependency manifest files and report known vulnerabilities.",
-  "main": "dist/cli.js",
+  "main": "dist/src/cli.js",
   "bin": {
-    "dependency-scanner": "dist/cli.js"
+    "dependency-scanner": "dist/src/cli.js"
   },
   "scripts": {
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
     "build": "tsc",
+    "scan": "node dist/src/cli.js",
     "dev": "ts-node src/cli.ts",
-    "start": "node dist/cli.js",
+    "start": "node dist/src/cli.js",
     "test": "npm run build && node --test 'dist/tests/*.js'"
   },
   "repository": {
