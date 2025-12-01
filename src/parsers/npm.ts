@@ -1,15 +1,16 @@
 /**
  * Parsers for npm ecosystem files:
- * - package-lock.json (v2/v3 format, npm v7+)
+ * - package-lock.json (v1, v2, v3 formats)
  * - package.json (direct deps only, fallback)
  * - yarn.lock (v1 classic, v2+ berry format)
  */
 
 import fs from "node:fs";
 import { DependencyGraph, DependencyNode } from "../types";
+import { makeNodeId as makeId, createNode, readJsonFile, readTextFile } from "./utils";
 
 function makeNodeId(name: string, version: string): string {
-  return `npm:${name}@${version}`;
+  return makeId("npm", name, version);
 }
 
 // package-lock.json
@@ -49,16 +50,74 @@ function resolvePackage(
   return packages[`node_modules/${depName}`] ?? null;
 }
 
+// package-lock.json v1 lockfile structure
+interface PackageLockV1 {
+  lockfileVersion?: number;
+  dependencies?: Record<string, PackageLockV1Entry>;
+}
+
+interface PackageLockV1Entry {
+  version: string;
+  requires?: Record<string, string>;
+  dependencies?: Record<string, PackageLockV1Entry>;
+}
+
+function parsePackageLockV1(lockfile: PackageLockV1): DependencyGraph {
+  const nodes = new Map<string, DependencyNode>();
+  const roots: string[] = [];
+
+  function traverse(
+    deps: Record<string, PackageLockV1Entry>,
+    isRoot: boolean,
+  ): void {
+    for (const [name, entry] of Object.entries(deps)) {
+      const id = makeNodeId(name, entry.version);
+
+      if (!nodes.has(id)) {
+        nodes.set(id, {
+          id,
+          name,
+          version: entry.version,
+          registry: "npm",
+          dependencyType: isRoot ? "direct" : "transitive",
+          dependencies: [],
+        });
+
+        if (isRoot) roots.push(id);
+      }
+
+      if (entry.dependencies) {
+        traverse(entry.dependencies, false);
+      }
+    }
+  }
+
+  if (lockfile.dependencies) {
+    traverse(lockfile.dependencies, true);
+  }
+
+  // Note: v1 lockfiles don't have easy access to dependency edges, so linking is skipped.
+  // This means that transitive deps are listed but not connected in the graph.
+
+  return { nodes, roots };
+}
+
 export function parsePackageLock(filePath: string): DependencyGraph {
   const raw = fs.readFileSync(filePath, "utf-8");
   const lockfile = JSON.parse(raw) as {
     lockfileVersion?: number;
-    packages: Record<string, PackageLockEntry>;
+    packages?: Record<string, PackageLockEntry>;
+    dependencies?: Record<string, PackageLockV1Entry>;
   };
+
+  // Route to v1 parser if no packages field (lockfileformat limitation)
+  if (!lockfile.packages && lockfile.dependencies) {
+    return parsePackageLockV1(lockfile as PackageLockV1);
+  }
 
   if (!lockfile.packages) {
     throw new Error(
-      `Missing "packages" field. This parser requires lockfileVersion 2+ (npm 7+).`
+      `Invalid package-lock.json: missing "packages" (v2/v3) or "dependencies" (v1) field.`
     );
   }
 
