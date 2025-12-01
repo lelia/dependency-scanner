@@ -123,7 +123,7 @@ async function main() {
   console.log(`\nFull report: ${outputPath}`);
   console.log(`⏱️  Completed in ${elapsed} seconds`);
 
-  // Exit with code 1 if vulnerabilities found (useful for CI)
+  // Exit with code 1 if vulnerabilities are found
   if (report.summary.vulnerableDependencies > 0) {
     process.exit(1);
   }
