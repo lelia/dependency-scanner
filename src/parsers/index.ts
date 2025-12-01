@@ -37,7 +37,7 @@ export function parse(filePath: string): DependencyGraph {
   if (filePath.endsWith("poetry.lock")) {
     return parsePoetryLock(filePath);
   }
-  if (filePath.endsWith("Pipfile.lock")) {
+  if (filePath.toLowerCase().endsWith("pipfile.lock")) {
     return parsePipfileLock(filePath);
   }
 
