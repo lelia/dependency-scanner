@@ -2,29 +2,88 @@
 /**
  * CLI entrypoint for the dependency-scanner tool.
  *
- * Setup: npm install && npm run build
- * Usage: npx dependency-scanner <lockfile-path>
- * Default: package-lock.json in the current working directory
+ * Usage:
+ *   npx dependency-scanner [options] [file]
+ *
+ * Options:
+ *   --database-source <osv|ghsa>  Vulnerability database to query (default: OSV.dev)
+ *   --github-token <pat>          GitHub token for GHSA queries (or set GITHUB_TOKEN env var)
+ *
+ * Examples:
+ *   npx dependency-scanner                                  # Scan ./package-lock.json with OSV
+ *   npx dependency-scanner --database-source ghsa           # Scan with GitHub Security Advisories
+ *   npx dependency-scanner /path/to/requirements.txt        # Scan specific file
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import { parse } from "./parsers";
 import { getAllDependencies } from "./traverse";
-import { checkVulnerabilities } from "./osv";
+import { checkOsvVulnerabilities } from "./clients/osv";
+import { checkGhsaVulnerabilities } from "./clients/ghsa";
 import { generateReport, Report } from "./report";
+import { Vulnerability } from "./clients/types";
+import { DependencyNode } from "./types";
+
+type VulnSource = "osv" | "ghsa";
+
+interface CliOptions {
+  filePath: string;
+  source: VulnSource;
+  githubToken?: string;
+}
+
+function parseArgs(): CliOptions {
+  const args = process.argv.slice(2);
+  let filePath = path.join(process.cwd(), "package-lock.json");
+  let source: VulnSource = "osv";
+  let githubToken: string | undefined;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    if (arg === "--database-source") {
+      const value = args[++i];
+      if (value !== "osv" && value !== "ghsa") {
+        console.error(`Invalid --database-source value: ${value}. Must be 'osv' or 'ghsa'.`);
+        process.exit(1);
+      }
+      source = value;
+    } else if (arg === "--github-token") {
+      githubToken = args[++i];
+    } else if (!arg.startsWith("-")) {
+      filePath = arg;
+    }
+  }
+
+  return { filePath, source, githubToken };
+}
+
+async function checkVulnerabilities(
+  deps: DependencyNode[],
+  source: VulnSource,
+  githubToken?: string,
+): Promise<Map<string, Vulnerability[]>> {
+  switch (source) {
+    case "osv":
+      return checkOsvVulnerabilities(deps);
+    case "ghsa":
+      return checkGhsaVulnerabilities(deps, githubToken);
+  }
+}
 
 async function main() {
-  const lockfilePath = process.argv[2] ?? path.join(process.cwd(), "package-lock.json");
+  const { filePath, source, githubToken } = parseArgs();
 
-  console.log(`Scanning: ${lockfilePath}`);
+  console.log(`Scanning: ${filePath}`);
 
-  const graph = parse(lockfilePath);
+  const graph = parse(filePath);
   const deps = getAllDependencies(graph);
   console.log(`Found ${deps.length} dependencies (${graph.roots.length} direct)`);
 
-  console.log("Checking for known vulnerabilities...");
-  const vulns = await checkVulnerabilities(deps);
+  const sourceLabel = source === "osv" ? "OSV.dev" : "GitHub Security Advisories";
+  console.log(`Checking ${sourceLabel} for known vulnerabilities...`);
+  const vulns = await checkVulnerabilities(deps, source, githubToken);
 
   const report = generateReport(graph, vulns);
   printSummary(report);
@@ -39,7 +98,6 @@ async function main() {
  */
 function printSummary(report: Report) {
   const { summary, findings } = report;
-  // Calculate % of vulnerable packages in manifest
   const percent = summary.totalDependencies > 0
     ? ((summary.vulnerableDependencies / summary.totalDependencies) * 100).toFixed(1)
     : "0.0";
