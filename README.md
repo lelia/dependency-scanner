@@ -62,7 +62,7 @@ npx .         # Run the CLI (see options below)
 
 #### GitHub Token
 
-A GitHub [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) is **required** to query GHSA. The GitHub GraphQL API does not allow unauthenticated requests, and the REST API does not support batched querying needed for this tool.
+A GitHub [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) is required to query GHSA using GraphQL. When running in default mode, the tool will fall back to only querying OSV if no token is provided. However, when using the `--database-source ghsa` CLI flag, the token is required and will error without one.
 
 > 💡 Create a fine-grained PAT [here](https://github.com/settings/personal-access-tokens/new). No special scopes are needed for public advisory data.
 
@@ -71,7 +71,7 @@ A GitHub [personal access token](https://docs.github.com/en/authentication/keepi
 export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
 
 # Option 2: CLI flag
-npx . --database-source ghsa --github-token ghp_xxxxxxxxxxxx
+npx . --github-token ghp_xxxxxxxxxxxx
 ```
 
 ### CLI config
@@ -80,12 +80,12 @@ npx . --database-source ghsa --github-token ghp_xxxxxxxxxxxx
 |--------|---------|-------------|
 | `[file]` | `./package-lock.json` | Path to lockfile or manifest to scan |
 | `--database-source` | both | Query single DB only: `osv` or `ghsa` |
-| `--github-token` | `$GITHUB_TOKEN` | GitHub PAT (**required** for GHSA) |
+| `--github-token` | `$GITHUB_TOKEN` | GitHub PAT for GHSA queries |
 
 ### CLI examples
 
 ```bash
-npx .                                       # Scan with both OSV + GHSA (merged)
+npx .                                       # Scan with both OSV + GHSA
 npx . --database-source osv                 # OSV only
 npx . --database-source ghsa                # GHSA only (requires token)
 npx . /path/to/requirements.txt             # Scan a Python manifest
