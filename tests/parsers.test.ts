@@ -51,7 +51,7 @@ describe("parsePackageLock", () => {
     const graph = parsePackageLock(path.join(FIXTURES, "npm/package-lock-v2.json"));
     assert.strictEqual(graph.nodes.size, 2);
     assert.strictEqual(graph.roots.length, 2);
-    
+
     const lodash = graph.nodes.get("npm:lodash@4.17.21");
     assert.ok(lodash);
     assert.strictEqual(lodash.registry, "npm");
@@ -67,17 +67,19 @@ describe("parsePackageLock", () => {
     assert.strictEqual(scoped.dependencyType, "direct");
   });
 
-  test("throws on v1 lockfile (unsupported)", () => {
-    assert.throws(
-      () => parsePackageLock(path.join(FIXTURES, "npm/package-lock-v1.json")),
-      /lockfileVersion 2\+/
-    );
+  test("parses v1 lockfile", () => {
+    const graph = parsePackageLock(path.join(FIXTURES, "npm/package-lock-v1.json"));
+    assert.strictEqual(graph.nodes.size, 1);
+    assert.ok(graph.nodes.has("npm:lodash@4.17.21"));
+    
+    const lodash = graph.nodes.get("npm:lodash@4.17.21");
+    assert.strictEqual(lodash?.dependencyType, "direct");
   });
 
   test("throws on empty object", () => {
     assert.throws(
       () => parsePackageLock(path.join(FIXTURES, "malformed/parser-empty-object.json")),
-      /packages/
+      /Invalid package-lock\.json/
     );
   });
 });
