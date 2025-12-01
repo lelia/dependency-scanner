@@ -111,15 +111,18 @@ A detailed `report.json` file is generated with full vulnerability information f
 ## Developing
 
 ```bash
-npm run dev   # Run CLI via ts-node (no build needed, ideal for iteration)
+npm run dev   # Run CLI via ts-node (no build needed)
 npm run build # Compile TypeScript
 npm run test  # Run unit tests
-npm run clean # Delete dist/ (if you need a fresh build)
+npm run clean # Deletes dist/ (for fresh build)
 ```
 
 ## Testing
 
-Usage: `npm run test`
+```bash
+npm run test # Run unit tests
+npm test     # Shorthand method
+```
 
 Unit tests currently cover filetype parsers and database clients using fixture files.
 
