@@ -1,0 +1,39 @@
+{
+  "metadata": {
+    "scannedFile": "/path/to/project/package-lock.json",
+    "sources": ["osv"],
+    "timestamp": "2025-12-01T12:00:00.000Z",
+    "durationMs": 320
+  },
+  "summary": {
+    "totalDependencies": 3,
+    "directDependencies": 1,
+    "transitiveDependencies": 2,
+    "vulnerableDependencies": 0,
+    "vulnerablePercentage": 0
+  },
+  "findings": [
+    {
+      "id": "npm:express@4.18.2",
+      "name": "express",
+      "version": "4.18.2",
+      "dependencyType": "direct",
+      "vulnerabilities": []
+    },
+    {
+      "id": "npm:debug@4.3.4",
+      "name": "debug",
+      "version": "4.3.4",
+      "dependencyType": "transitive",
+      "vulnerabilities": []
+    },
+    {
+      "id": "npm:ms@2.1.3",
+      "name": "ms",
+      "version": "2.1.3",
+      "dependencyType": "transitive",
+      "vulnerabilities": []
+    }
+  ]
+}
+
