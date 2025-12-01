@@ -21,6 +21,7 @@
       "vulnerabilities": [
         {
           "id": "GHSA-jf85-cpcp-j695",
+          "aliases": ["CVE-2021-23337"],
           "summary": "Prototype Pollution in lodash",
           "severity": [{ "type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:H" }],
           "references": [{ "type": "ADVISORY", "url": "https://github.com/advisories/GHSA-jf85-cpcp-j695" }],
@@ -43,6 +44,7 @@
       "vulnerabilities": [
         {
           "id": "GHSA-xvch-5gv4-984h",
+          "aliases": ["CVE-2021-44906"],
           "summary": "Prototype Pollution in minimist",
           "severity": [{ "type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:L" }],
           "references": [{ "type": "ADVISORY", "url": "https://github.com/advisories/GHSA-xvch-5gv4-984h" }],
