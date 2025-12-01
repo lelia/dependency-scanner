@@ -52,7 +52,7 @@ describe("parsePackageLock", () => {
     
     const lodash = graph.nodes.get("npm:lodash@4.17.21");
     assert.ok(lodash);
-    assert.strictEqual(lodash.ecosystem, "npm");
+    assert.strictEqual(lodash.registry, "npm");
   });
 
   test("parses v3 lockfile", () => {
@@ -89,7 +89,7 @@ describe("parsePackageJson", () => {
     // All should be marked as direct
     for (const node of graph.nodes.values()) {
       assert.strictEqual(node.dependencyType, "direct");
-      assert.strictEqual(node.ecosystem, "npm");
+      assert.strictEqual(node.registry, "npm");
     }
   });
 });
@@ -120,7 +120,7 @@ describe("parseRequirements", () => {
     
     const requests = graph.nodes.get("pypi:requests@2.31.0");
     assert.ok(requests);
-    assert.strictEqual(requests.ecosystem, "pypi");
+    assert.strictEqual(requests.registry, "pypi");
   });
 
   test("handles messy requirements file", () => {
