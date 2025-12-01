@@ -131,6 +131,7 @@ export async function checkGhsaVulnerabilities(
                                 type: "WEB",
                                 url: ref.url,
                             })),
+                            fixedIn: node.firstPatchedVersion?.identifier,
                         });
                     }
                 }
