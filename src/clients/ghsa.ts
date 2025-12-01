@@ -2,6 +2,7 @@
  * Client for GHSA (GitHub Security Advisory) database.
  *
  * Uses GraphQL API to query per-package vulnerabilities and matches versions client-side.
+ * Large dependency sets are chunked into batches of 100 packages per query to avoid limits.
  * The REST API does not support batch queries, instead returning ALL advisories for an ecosystem.
  *
  * Note: GraphQL API requires authentication (REST allows unauthenticated access).
@@ -28,6 +29,9 @@ function toGhsaEcosystem(registry: PackageRegistry): GhsaEcosystem {
 function toAlias(name: string, index: number): string {
     return `pkg_${index}_${name.replace(/[^a-zA-Z0-9]/g, "_")}`;
 }
+
+// GraphQL query complexity limit - chunk packages into smaller batches
+const GHSA_BATCH_SIZE = 100;
 
 interface VulnerabilityNode {
     advisory: {
@@ -82,75 +86,99 @@ export async function checkGhsaVulnerabilities(
 
     for (const [registry, registryDeps] of byRegistry) {
         const ecosystem = toGhsaEcosystem(registry);
-
         const uniquePackages = [...new Set(registryDeps.map(d => d.name))];
 
         if (uniquePackages.length === 0) continue;
 
-        const queryParts = uniquePackages.map((pkg, i) => {
-            const alias = toAlias(pkg, i);
-            return `
-        ${alias}: securityVulnerabilities(ecosystem: ${ecosystem}, package: "${pkg}", first: 100) {
-          nodes {
-            advisory {
-              ghsaId
-              summary
-              severity
-              identifiers { type value }
-              references { url }
-            }
-            vulnerableVersionRange
-            firstPatchedVersion { identifier }
-          }
+        // Collect all vulnerability data across batches
+        const pkgVulnData = new Map<string, VulnerabilityNode[]>();
+        const totalBatches = Math.ceil(uniquePackages.length / GHSA_BATCH_SIZE);
+
+        if (totalBatches > 1) {
+            console.log(`   GHSA: ${totalBatches} batches (max ${GHSA_BATCH_SIZE}/query, GraphQL limit)`);
         }
-      `;
-        });
 
-        const query = `query { ${queryParts.join("\n")} }`;
+        // Process unique packages in batches to avoid GraphQL query limits
+        for (let i = 0; i < uniquePackages.length; i += GHSA_BATCH_SIZE) {
+            const batchNum = Math.floor(i / GHSA_BATCH_SIZE) + 1;
+            if (totalBatches > 1) {
+                console.log(`   → GHSA batch ${batchNum}/${totalBatches}`);
+            }
+            const batchPackages = uniquePackages.slice(i, i + GHSA_BATCH_SIZE);
 
-        try {
-            const response = await gql<GraphQLResponse>(query);
-
-            for (const dep of registryDeps) {
-                const alias = toAlias(dep.name, uniquePackages.indexOf(dep.name));
-                const vulnNodes = response[alias]?.nodes || [];
-
-                const matching: Vulnerability[] = [];
-                const seenIds = new Set<string>();
-
-                for (const node of vulnNodes) {
-                    if (seenIds.has(node.advisory.ghsaId)) continue;
-
-                    if (isVersionAffected(dep.version, node.vulnerableVersionRange)) {
-                        seenIds.add(node.advisory.ghsaId);
-                        // Extract CVE and other aliases from identifiers
-                        const aliases = node.advisory.identifiers
-                            ?.filter(id => id.type !== "GHSA")
-                            .map(id => id.value);
-                        matching.push({
-                            id: node.advisory.ghsaId,
-                            aliases: aliases?.length ? aliases : undefined,
-                            summary: node.advisory.summary,
-                            severity: node.advisory.severity
-                                ? [{ type: "GHSA", score: node.advisory.severity }]
-                                : undefined,
-                            references: node.advisory.references?.map(ref => ({
-                                type: "WEB",
-                                url: ref.url,
-                            })),
-                            fixedIn: node.firstPatchedVersion?.identifier,
-                        });
-                    }
+            const queryParts = batchPackages.map((pkg, idx) => {
+                const alias = toAlias(pkg, i + idx); // global index for unique alias
+                return `
+            ${alias}: securityVulnerabilities(ecosystem: ${ecosystem}, package: "${pkg}", first: 100) {
+              nodes {
+                advisory {
+                  ghsaId
+                  summary
+                  severity
+                  identifiers { type value }
+                  references { url }
                 }
+                vulnerableVersionRange
+                firstPatchedVersion { identifier }
+              }
+            }
+          `;
+            });
 
-                results.set(dep.id, matching);
+            const query = `query { ${queryParts.join("\n")} }`;
+
+            try {
+                const response = await gql<GraphQLResponse>(query);
+
+                // Store results for each package in this batch
+                for (let idx = 0; idx < batchPackages.length; idx++) {
+                    const pkg = batchPackages[idx];
+                    const alias = toAlias(pkg, i + idx);
+                    const vulnNodes = response[alias]?.nodes || [];
+                    pkgVulnData.set(pkg, vulnNodes);
+                }
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                console.warn(`⚠️ GHSA query failed for ${registry} batch: ${message}`);
+                // Mark batch packages as empty on error
+                for (const pkg of batchPackages) {
+                    pkgVulnData.set(pkg, []);
+                }
             }
-        } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            console.warn(`⚠️ GHSA query failed for ${registry}: ${message}`);
-            for (const dep of registryDeps) {
-                results.set(dep.id, []);
+        }
+
+        // Now match versions for all deps using the collected vulnerability data
+        for (const dep of registryDeps) {
+            const vulnNodes = pkgVulnData.get(dep.name) || [];
+            const matching: Vulnerability[] = [];
+            const seenIds = new Set<string>();
+
+            for (const node of vulnNodes) {
+                if (seenIds.has(node.advisory.ghsaId)) continue;
+
+                if (isVersionAffected(dep.version, node.vulnerableVersionRange)) {
+                    seenIds.add(node.advisory.ghsaId);
+                    // Extract CVE and other aliases from identifiers
+                    const aliases = node.advisory.identifiers
+                        ?.filter(id => id.type !== "GHSA")
+                        .map(id => id.value);
+                    matching.push({
+                        id: node.advisory.ghsaId,
+                        aliases: aliases?.length ? aliases : undefined,
+                        summary: node.advisory.summary,
+                        severity: node.advisory.severity
+                            ? [{ type: "GHSA", score: node.advisory.severity }]
+                            : undefined,
+                        references: node.advisory.references?.map(ref => ({
+                            type: "WEB",
+                            url: ref.url,
+                        })),
+                        fixedIn: node.firstPatchedVersion?.identifier,
+                    });
+                }
             }
+
+            results.set(dep.id, matching);
         }
     }
 

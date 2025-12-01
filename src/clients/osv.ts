@@ -1,7 +1,8 @@
 /**
  * Client for OSV.dev (Open Source Vulnerability) database.
  * 
- * Uses batch query REST API to send all packages in one request and matches versions server-side.
+ * Uses batch query REST API and matches versions server-side.
+ * Large dependency sets are chunked into batches of 1000 to avoid API limits.
  * No auth required, aggregates from multiple sources (including GHSA).
  *
  * Ref: https://google.github.io/osv.dev/post-v1-querybatch/
@@ -57,9 +58,13 @@ function extractFixedVersion(vuln: OsvVulnerability): string | undefined {
   return undefined;
 }
 
+// OSV batch API recommends max 1000 queries per request
+const OSV_BATCH_SIZE = 1000;
+
 /**
  * Check dependencies for vulnerabilities in OSV.dev database using query batching.
  * Deduplicates and maps results back to dependency node IDs.
+ * Large dependency sets are chunked into multiple requests.
  */
 export async function checkOsvVulnerabilities(
   deps: DependencyNode[],
@@ -77,26 +82,38 @@ export async function checkOsvVulnerabilities(
     }
   }
 
-  const queries = [...unique.values()].map((u) => u.query);
+  const allEntries = [...unique.entries()];
+  const results = new Map<string, Vulnerability[]>();
+  const totalBatches = Math.ceil(allEntries.length / OSV_BATCH_SIZE);
 
-  const response = await fetch(OSV_BATCH_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ queries }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Vulnerability check failed: ${response.status} ${response.statusText}`);
+  if (totalBatches > 1) {
+    console.log(`\n📦 Large dependency set (${allEntries.length} packages) — batching API requests`);
+    console.log(`   OSV: ${totalBatches} batches (max ${OSV_BATCH_SIZE}/request)`);
   }
 
-  const data = (await response.json()) as OsvResponse;
+  // Process in batches to avoid API limits
+  for (let i = 0; i < allEntries.length; i += OSV_BATCH_SIZE) {
+    const batchNum = Math.floor(i / OSV_BATCH_SIZE) + 1;
+    if (totalBatches > 1) {
+      console.log(`   → OSV batch ${batchNum}/${totalBatches}`);
+    }
+    const batch = allEntries.slice(i, i + OSV_BATCH_SIZE);
+    const queries = batch.map(([, u]) => u.query);
 
-  const results = new Map<string, Vulnerability[]>();
-  data.results.forEach((entry, i) => {
-    const query = queries[i];
-    const key = `${query.package.ecosystem}:${query.package.name}@${query.version}`;
-    const info = unique.get(key);
-    if (info) {
+    const response = await fetch(OSV_BATCH_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ queries }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Vulnerability check failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as OsvResponse;
+
+    data.results.forEach((entry, idx) => {
+      const [key, info] = batch[idx];
       // Map OSV response to our Vulnerability type, extracting fix info
       const vulns: Vulnerability[] = (entry.vulns ?? []).map(v => ({
         id: v.id,
@@ -107,8 +124,8 @@ export async function checkOsvVulnerabilities(
         fixedIn: extractFixedVersion(v),
       }));
       results.set(info.nodeId, vulns);
-    }
-  });
+    });
+  }
 
   return results;
 }
