@@ -26,8 +26,34 @@ interface OsvQuery {
   version: string;
 }
 
+interface OsvVulnerability {
+  id: string;
+  summary?: string;
+  severity?: Array<{ type: string; score: string }>;
+  references?: Array<{ type: string; url: string }>;
+  affected?: Array<{
+    ranges?: Array<{
+      events?: Array<{ introduced?: string; fixed?: string }>;
+    }>;
+  }>;
+}
+
 interface OsvResponse {
-  results: Array<{ vulns?: Vulnerability[] }>;
+  results: Array<{ vulns?: OsvVulnerability[] }>;
+}
+
+/**
+ * Extract the first fixed version from OSV affected ranges.
+ */
+function extractFixedVersion(vuln: OsvVulnerability): string | undefined {
+  for (const affected of vuln.affected ?? []) {
+    for (const range of affected.ranges ?? []) {
+      for (const event of range.events ?? []) {
+        if (event.fixed) return event.fixed;
+      }
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -70,7 +96,15 @@ export async function checkOsvVulnerabilities(
     const key = `${query.package.ecosystem}:${query.package.name}@${query.version}`;
     const info = unique.get(key);
     if (info) {
-      results.set(info.nodeId, entry.vulns ?? []);
+      // Map OSV response to our Vulnerability type, extracting fix info
+      const vulns: Vulnerability[] = (entry.vulns ?? []).map(v => ({
+        id: v.id,
+        summary: v.summary,
+        severity: v.severity,
+        references: v.references,
+        fixedIn: extractFixedVersion(v),
+      }));
+      results.set(info.nodeId, vulns);
     }
   });
 
