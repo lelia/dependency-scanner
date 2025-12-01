@@ -79,6 +79,18 @@ npx . --github-token ghp_xxxxxxxxxxxx
 | `--github-token` | `$GITHUB_TOKEN` | GitHub PAT for GHSA queries |
 | `--ignore-file` | `.scanignore` | Path to custom ignore file |
 
+### CLI examples
+
+```bash
+npx .                                       # Scan with both OSV + GHSA
+npx . /path/to/requirements.txt             # Scan a Python manifest file
+npx . --database-source osv                 # OSV only (no auth required)
+npx . --database-source ghsa                # GHSA only (requires token)
+npx . --ignore-file /path/to/.scanignore    # Scan a custom ignore file
+npx . --github-token ghp_xxxxxxxxxxxx       # Use token for GHSA queries
+npx . --help                                # Show help menu
+```
+
 ### Ignoring vulnerabilities
 
 Create a `.scanignore` file to suppress specific advisories by ID:
@@ -103,16 +115,6 @@ npx . --ignore-file /path/to/.ci-ignore
 ```
 
 > 💡 A package only drops from the vulnerable packages count when *all* of its vulnerabilities are ignored.
-
-### CLI examples
-
-```bash
-npx .                                       # Scan with both OSV + GHSA
-npx . --database-source osv                 # OSV only
-npx . --database-source ghsa                # GHSA only (requires token)
-npx . /path/to/requirements.txt             # Scan a Python manifest
-npx . --help                                # Show help
-```
 
 ### Sample output
 
