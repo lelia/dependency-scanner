@@ -26,13 +26,11 @@ import { checkOsvVulnerabilities } from "./clients/osv";
 import { checkGhsaVulnerabilities } from "./clients/ghsa";
 import { generateReport, Report } from "./report";
 import { Vulnerability } from "./clients/types";
-import { DependencyNode } from "./types";
-
-type VulnSource = "osv" | "ghsa";
+import { DependencyNode, DatabaseSource } from "./types";
 
 interface CliOptions {
   filePath: string;
-  source: VulnSource;
+  source: DatabaseSource;
   githubToken?: string;
 }
 
@@ -56,7 +54,7 @@ Examples:
 function parseArgs(): CliOptions {
   const args = process.argv.slice(2);
   let filePath = path.join(process.cwd(), "package-lock.json");
-  let source: VulnSource = "osv";
+  let source: DatabaseSource = "osv";
   let githubToken: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
@@ -83,7 +81,7 @@ function parseArgs(): CliOptions {
 
 async function checkVulnerabilities(
   deps: DependencyNode[],
-  source: VulnSource,
+  source: DatabaseSource,
   githubToken?: string,
 ): Promise<Map<string, Vulnerability[]>> {
   switch (source) {
@@ -95,24 +93,40 @@ async function checkVulnerabilities(
 }
 
 async function main() {
+  const startTime = Date.now();
   const { filePath, source, githubToken } = parseArgs();
 
   console.log(`Scanning: ${filePath}`);
 
   const graph = parse(filePath);
   const deps = getAllDependencies(graph);
-  console.log(`Found ${deps.length} dependencies (${graph.roots.length} direct)`);
+  const transitive = deps.length - graph.roots.length;
+  console.log(`📦 Found ${deps.length} dependencies (${graph.roots.length} direct, ${transitive} transitive)`);
 
   const sourceLabel = source === "osv" ? "OSV.dev" : "GitHub Security Advisories";
-  console.log(`Checking ${sourceLabel} for known vulnerabilities...`);
+  console.log(`\n🔍 Checking ${sourceLabel} for known vulnerabilities...`);
   const vulns = await checkVulnerabilities(deps, source, githubToken);
 
-  const report = generateReport(graph, vulns);
+  const durationMs = Date.now() - startTime;
+  const report = generateReport(graph, vulns, {
+    scannedFile: filePath,
+    sources: [source],
+    timestamp: new Date().toISOString(),
+    durationMs,
+  });
   printSummary(report);
 
   const outputPath = path.join(process.cwd(), "report.json");
   fs.writeFileSync(outputPath, JSON.stringify(report, null, 2));
+
+  const elapsed = (durationMs / 1000).toFixed(2);
   console.log(`\nFull report: ${outputPath}`);
+  console.log(`⏱️  Completed in ${elapsed} seconds`);
+
+  // Exit with code 1 if vulnerabilities found (useful for CI)
+  if (report.summary.vulnerableDependencies > 0) {
+    process.exit(1);
+  }
 }
 
 /**
