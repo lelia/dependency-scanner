@@ -178,13 +178,14 @@ function printSummary(report: Report, ignoredCount: number) {
     ? ((summary.vulnerableDependencies / summary.totalDependencies) * 100).toFixed(1)
     : "0.0";
 
-  console.log("\n" + "─".repeat(65));
+  const lineWidth = ignoredCount > 0 ? 80 : 50;
+  console.log("\n" + "─".repeat(lineWidth));
   let summaryLine = `Total Dependencies: ${summary.totalDependencies}  |  Vulnerable: ${summary.vulnerableDependencies} (${percent}%)`;
   if (ignoredCount > 0) {
-    summaryLine += `  |  Ignored: ${ignoredCount}`;
+    summaryLine += `  |  Vulnerabilities Ignored: ${ignoredCount}`;
   }
   console.log(summaryLine);
-  console.log("─".repeat(65));
+  console.log("─".repeat(lineWidth));
 
   const vulnerable = findings.filter((f) => f.vulnerabilities.length > 0);
 
