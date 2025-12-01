@@ -3,16 +3,19 @@
  * CLI entrypoint for the dependency-scanner tool.
  *
  * Usage:
- *   npx dependency-scanner [options] [file]
+ *   npx . [options] [file]
  *
  * Options:
- *   --database-source <osv|ghsa>  Vulnerability database to query (default: OSV.dev)
- *   --github-token <pat>          GitHub token for GHSA queries (or set GITHUB_TOKEN env var)
+ *   --database-source <osv|ghsa>  Vulnerability database (default: osv)
+ *   --github-token <token>        GitHub token (required for GHSA GraphQL API)
+ *   --help                        Show help message
  *
  * Examples:
- *   npx dependency-scanner                                  # Scan ./package-lock.json with OSV
- *   npx dependency-scanner --database-source ghsa           # Scan with GitHub Security Advisories
- *   npx dependency-scanner /path/to/requirements.txt        # Scan specific file
+ *   npx .                           # Scan ./package-lock.json with OSV
+ *   npx . --database-source ghsa    # Scan with GitHub Security Advisories
+ *   npx . /path/to/requirements.txt
+ *
+ * For development: use `npm run dev` (no build needed).
  */
 
 import fs from "node:fs";
@@ -33,6 +36,23 @@ interface CliOptions {
   githubToken?: string;
 }
 
+function printHelp() {
+  console.log(`
+Usage: npx . [options] [file]
+
+Options:
+  --database-source <osv|ghsa>  Vulnerability database (default: osv)
+  --github-token <token>        GitHub token for GHSA (or set GITHUB_TOKEN)
+  --help                        Show this help message
+
+Examples:
+  npx .                           Scan ./package-lock.json with OSV
+  npx . --database-source ghsa    Scan with GitHub Security Advisories
+  npx . /path/to/yarn.lock        Scan specific file
+`);
+  process.exit(0);
+}
+
 function parseArgs(): CliOptions {
   const args = process.argv.slice(2);
   let filePath = path.join(process.cwd(), "package-lock.json");
@@ -42,7 +62,9 @@ function parseArgs(): CliOptions {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
-    if (arg === "--database-source") {
+    if (arg === "--help" || arg === "-h") {
+      printHelp();
+    } else if (arg === "--database-source") {
       const value = args[++i];
       if (value !== "osv" && value !== "ghsa") {
         console.error(`Invalid --database-source value: ${value}. Must be 'osv' or 'ghsa'.`);
