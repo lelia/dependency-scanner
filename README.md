@@ -56,7 +56,7 @@ npm run build # Build the tool
 npx .         # Run the CLI (see options below)
 ```
 
-#### GitHub Token
+#### GitHub token
 
 A GitHub [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) is required to query GHSA using GraphQL. When running in default mode, the tool will fall back to only querying OSV if no token is provided. However, when using the `--database-source ghsa` CLI flag, the token is required and will error without one.
 
@@ -70,12 +70,12 @@ export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
 npx . --github-token ghp_xxxxxxxxxxxx
 ```
 
-### CLI config
+### CLI configuration
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `[file]` | `./package-lock.json` | Path to lockfile or manifest to scan |
-| `--database-source` | both | Query single DB only: `osv` or `ghsa` |
+| `--database-source` | both databases | Query single DB only: `osv` or `ghsa` |
 | `--github-token` | `$GITHUB_TOKEN` | GitHub PAT for GHSA queries |
 | `--ignore-file` | `.scanignore` | Path to custom ignore file |
 
@@ -85,11 +85,12 @@ Create a `.scanignore` file to suppress specific advisories by ID:
 
 ```bash
 # .scanignore - one ID per line
-# Comments start with #
 
 GHSA-jf85-cpcp-j695   # Known issue, mitigated
 CVE-2021-23337        # False positive for our use case
 ```
+
+Comments can be added (using `#`) above an ID or to the right on same line.
 
 **Lookup order:** `--ignore-file` flag → scanned file's directory → current working directory.
 
@@ -101,7 +102,7 @@ npx .
 npx . --ignore-file /path/to/.ci-ignore
 ```
 
-> 💡 In the CLI output, "Ignored" counts individual vulnerability instances, while "Vulnerable" counts packages with at least one remaining vulnerability. A package only drops from the vulnerable count when *all* of its vulnerabilities are ignored.
+> 💡 A package only drops from the vulnerable packages count when *all* of its vulnerabilities are ignored.
 
 ### CLI examples
 
