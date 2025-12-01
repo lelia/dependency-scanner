@@ -6,7 +6,7 @@
  *
  * GitHub token optional but recommended to increase rate limits from 60 reqs/hr to 5000 reqs/hr.
  * Usage: Export as environment variable (`GITHUB_TOKEN`) or pass as CLI flag (`--github-token`).
- *
+
  * Ref: https://docs.github.com/en/graphql/reference/objects#securityvulnerability
  */
 
