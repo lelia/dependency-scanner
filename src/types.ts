@@ -4,6 +4,7 @@
 
 export type DependencyType = "direct" | "transitive";
 export type PackageRegistry = "npm" | "pypi";
+export type DatabaseSource = "osv" | "ghsa";
 
 export interface DependencyNode {
   id: string;
