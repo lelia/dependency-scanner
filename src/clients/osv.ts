@@ -1,19 +1,23 @@
 /**
- * API Client for OSV.dev (Open Source Vulnerability) database.
+ * Client for OSV.dev (Open Source Vulnerability) database.
  * 
  * Ref: https://google.github.io/osv.dev/post-v1-querybatch/
  */
 
 import fetch from "node-fetch";
-import { DependencyNode } from "../types";
+import { DependencyNode, PackageRegistry } from "../types";
+import { Vulnerability } from "./types";
 
 const OSV_BATCH_URL = "https://api.osv.dev/v1/querybatch";
 
-export interface Vulnerability {
-  id: string;
-  summary?: string;
-  severity?: Array<{ type: string; score: string }>;
-  references?: Array<{ type: string; url: string }>;
+/**
+ * Map our ecosystem to OSV ecosystem string.
+ */
+function toOsvEcosystem(registry: PackageRegistry): string {
+  switch (registry) {
+    case "npm": return "npm";
+    case "pypi": return "PyPI";
+  }
 }
 
 interface OsvQuery {
@@ -26,20 +30,21 @@ interface OsvResponse {
 }
 
 /**
- * Check given deps for known vulnerabilities.
- * Dedupes and maps results back to node IDs.
+ * Check dependencies for vulnerabilities in OSV.dev database using query batching.
+ * Deduplicates and maps results back to dependency node IDs.
  */
-export async function checkVulnerabilities(
+export async function checkOsvVulnerabilities(
   deps: DependencyNode[],
 ): Promise<Map<string, Vulnerability[]>> {
   const unique = new Map<string, { nodeId: string; query: OsvQuery }>();
 
   for (const dep of deps) {
-    const key = `npm:${dep.name}@${dep.version}`;
+    const ecosystem = toOsvEcosystem(dep.registry);
+    const key = `${ecosystem}:${dep.name}@${dep.version}`;
     if (!unique.has(key)) {
       unique.set(key, {
         nodeId: dep.id,
-        query: { package: { ecosystem: "npm", name: dep.name }, version: dep.version },
+        query: { package: { ecosystem, name: dep.name }, version: dep.version },
       });
     }
   }
@@ -61,7 +66,7 @@ export async function checkVulnerabilities(
   const results = new Map<string, Vulnerability[]>();
   data.results.forEach((entry, i) => {
     const query = queries[i];
-    const key = `npm:${query.package.name}@${query.version}`;
+    const key = `${query.package.ecosystem}:${query.package.name}@${query.version}`;
     const info = unique.get(key);
     if (info) {
       results.set(info.nodeId, entry.vulns ?? []);
