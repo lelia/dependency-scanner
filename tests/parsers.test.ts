@@ -1,6 +1,8 @@
 /**
  * Unit tests for filetype parsers and routing logic.
  * 
+ * Uses fixtures to test the parsers with known-good and malformed inputs.
+ *
  * Usage: npm run test
  */
 
@@ -43,7 +45,7 @@ describe("parse router", () => {
   });
 });
 
-// npm ecosystem tests
+// npm registry tests
 describe("parsePackageLock", () => {
   test("parses v2 lockfile", () => {
     const graph = parsePackageLock(path.join(FIXTURES, "npm/package-lock-v2.json"));
@@ -74,7 +76,7 @@ describe("parsePackageLock", () => {
 
   test("throws on empty object", () => {
     assert.throws(
-      () => parsePackageLock(path.join(FIXTURES, "malformed/empty.json")),
+      () => parsePackageLock(path.join(FIXTURES, "malformed/parser-empty-object.json")),
       /packages/
     );
   });
@@ -112,7 +114,7 @@ describe("parseYarnLock", () => {
   });
 });
 
-// pypi ecosystem tests
+// PyPI registry tests
 describe("parseRequirements", () => {
   test("parses clean requirements file", () => {
     const graph = parseRequirements(path.join(FIXTURES, "pypi/requirements-clean.txt"));
@@ -182,7 +184,7 @@ describe("parsePipfileLock", () => {
 
   test("throws on invalid Pipfile.lock", () => {
     assert.throws(
-      () => parsePipfileLock(path.join(FIXTURES, "malformed/empty.json")),
+      () => parsePipfileLock(path.join(FIXTURES, "malformed/parser-empty-object.json")),
       /default.*develop/
     );
   });
