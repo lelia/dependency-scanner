@@ -7,7 +7,7 @@
 
 import fs from "node:fs";
 import { DependencyGraph, DependencyNode } from "../types";
-import { makeNodeId as makeId, createNode, readJsonFile, readTextFile } from "./utils";
+import { makeNodeId as makeId } from "./utils";
 
 function makeNodeId(name: string, version: string): string {
   return makeId("npm", name, version);
