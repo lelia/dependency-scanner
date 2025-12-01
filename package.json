@@ -8,7 +8,6 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "prebuild": "npm run clean",
     "build": "tsc",
     "scan": "node dist/src/cli.js",
     "dev": "ts-node src/cli.ts",
