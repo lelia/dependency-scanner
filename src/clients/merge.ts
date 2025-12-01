@@ -3,6 +3,7 @@
  * 
  * Merge strategy:
  * - Dedupe by vulnerability ID
+ * - Aliases: union (combine CVE IDs from both)
  * - Severity: take highest (conservative approach)
  * - References: union (combine, dedupe by URL)
  * - Summary: prefer longer description
@@ -44,11 +45,18 @@ export function mergeVulnerabilities(
 function mergeVuln(a: Vulnerability, b: Vulnerability): Vulnerability {
   return {
     id: a.id,
+    aliases: mergeAliases(a.aliases, b.aliases),
     summary: pickLonger(a.summary, b.summary),
     severity: pickHigherSeverity(a.severity, b.severity),
     references: mergeRefs(a.references, b.references),
     fixedIn: a.fixedIn || b.fixedIn,
   };
+}
+
+function mergeAliases(a?: string[], b?: string[]): string[] | undefined {
+  if (!a?.length) return b;
+  if (!b?.length) return a;
+  return [...new Set([...a, ...b])];
 }
 
 function pickLonger(a?: string, b?: string): string | undefined {

@@ -34,6 +34,7 @@ interface VulnerabilityNode {
         ghsaId: string;
         summary: string;
         severity: string;
+        identifiers: Array<{ type: string; value: string }>;
         references: Array<{ url: string }>;
     };
     vulnerableVersionRange: string;
@@ -95,6 +96,7 @@ export async function checkGhsaVulnerabilities(
               ghsaId
               summary
               severity
+              identifiers { type value }
               references { url }
             }
             vulnerableVersionRange
@@ -121,8 +123,13 @@ export async function checkGhsaVulnerabilities(
 
                     if (isVersionAffected(dep.version, node.vulnerableVersionRange)) {
                         seenIds.add(node.advisory.ghsaId);
+                        // Extract CVE and other aliases from identifiers
+                        const aliases = node.advisory.identifiers
+                            ?.filter(id => id.type !== "GHSA")
+                            .map(id => id.value);
                         matching.push({
                             id: node.advisory.ghsaId,
+                            aliases: aliases?.length ? aliases : undefined,
                             summary: node.advisory.summary,
                             severity: node.advisory.severity
                                 ? [{ type: "GHSA", score: node.advisory.severity }]

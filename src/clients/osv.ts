@@ -28,6 +28,7 @@ interface OsvQuery {
 
 interface OsvVulnerability {
   id: string;
+  aliases?: string[];
   summary?: string;
   severity?: Array<{ type: string; score: string }>;
   references?: Array<{ type: string; url: string }>;
@@ -99,6 +100,7 @@ export async function checkOsvVulnerabilities(
       // Map OSV response to our Vulnerability type, extracting fix info
       const vulns: Vulnerability[] = (entry.vulns ?? []).map(v => ({
         id: v.id,
+        aliases: v.aliases,
         summary: v.summary,
         severity: v.severity,
         references: v.references,

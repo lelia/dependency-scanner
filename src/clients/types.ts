@@ -4,6 +4,7 @@
 
 export interface Vulnerability {
   id: string;
+  aliases?: string[];  // CVE IDs and other cross-references
   summary?: string;
   severity?: Array<{ type: string; score: string }>;
   references?: Array<{ type: string; url: string }>;
