@@ -32,11 +32,13 @@
   "homepage": "https://github.com/lelia/dependency-scanner#readme",
   "dependencies": {
     "@octokit/graphql": "^9.0.3",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "semver": "^7.7.3"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
     "@types/node-fetch": "^2.6.12",
+    "@types/semver": "^7.7.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
