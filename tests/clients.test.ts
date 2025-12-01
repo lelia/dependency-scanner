@@ -161,32 +161,47 @@ describe("Malformed API responses", () => {
   });
 });
 
-describe("Version matching", () => {
-  // Test the isVersionAffected logic directly
-  // This is the naive matching we use in both clients
+describe("Version matching (semver)", () => {
+  // GHSA client uses semver package for accurate version matching
+  // OSV does server-side matching, so no client-side semver needed there
   
-  test("matches version in range", () => {
-    // "< 4.17.21" should match "4.17.20"
-    const range = "< 4.17.21";
-    const version = "4.17.20";
-    
-    // Basic heuristic: range starts with "<" means versions before X are affected
-    assert.ok(range.startsWith("<"));
+  const semver = require("semver");
+  
+  // Helper to convert GHSA range format to semver format
+  function toSemverRange(ghsaRange: string): string {
+    return ghsaRange
+      .split(",")
+      .map((part: string) => part.trim().replace(/\s+/g, ""))
+      .join(" ");
+  }
+
+  test("matches version in simple range", () => {
+    const range = toSemverRange("< 4.17.21");
+    assert.ok(semver.satisfies("4.17.20", range));
+    assert.ok(!semver.satisfies("4.17.21", range));
+    assert.ok(!semver.satisfies("4.17.22", range));
   });
 
-  test("does not match fixed version", () => {
-    const range = "< 4.17.21";
-    const version = "4.17.21";
-    
-    // If range is exactly "< version", that version is NOT affected
-    assert.strictEqual(range, `< ${version}`);
+  test("matches version in complex range", () => {
+    const range = toSemverRange(">= 1.0.0, < 2.0.0");
+    assert.ok(semver.satisfies("1.0.0", range));
+    assert.ok(semver.satisfies("1.5.0", range));
+    assert.ok(semver.satisfies("1.9.9", range));
+    assert.ok(!semver.satisfies("0.9.9", range));
+    assert.ok(!semver.satisfies("2.0.0", range));
   });
 
-  test("matches complex range", () => {
-    const range = ">= 1.0.0, < 2.0.0";
-    
-    // Contains ", <" indicates upper bound
-    assert.ok(range.includes(", <"));
+  test("handles exact version match", () => {
+    const range = toSemverRange("= 1.2.3");
+    assert.ok(semver.satisfies("1.2.3", range));
+    assert.ok(!semver.satisfies("1.2.4", range));
+  });
+
+  test("handles greater-than range", () => {
+    const range = toSemverRange(">= 2.0.0");
+    assert.ok(semver.satisfies("2.0.0", range));
+    assert.ok(semver.satisfies("3.0.0", range));
+    assert.ok(!semver.satisfies("1.9.9", range));
   });
 });
 
