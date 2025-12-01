@@ -77,6 +77,7 @@ function createTestVulns(): Map<string, Vulnerability[]> {
   
   vulns.set("npm:lodash@4.17.20", [{
     id: "GHSA-jf85-cpcp-j695",
+    aliases: ["CVE-2021-23337"],
     summary: "Prototype Pollution in lodash",
     severity: [{ type: "CVSS_V3", score: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:H" }],
     references: [{ type: "ADVISORY", url: "https://github.com/advisories/GHSA-jf85-cpcp-j695" }],
@@ -85,6 +86,7 @@ function createTestVulns(): Map<string, Vulnerability[]> {
   
   vulns.set("npm:minimist@1.2.5", [{
     id: "GHSA-xvch-5gv4-984h",
+    aliases: ["CVE-2021-44906"],
     summary: "Prototype Pollution in minimist",
     severity: [{ type: "CVSS_V3", score: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:L" }],
     references: [{ type: "ADVISORY", url: "https://github.com/advisories/GHSA-xvch-5gv4-984h" }],
@@ -139,6 +141,20 @@ describe("report fixtures", () => {
     assert.strictEqual(minimist.vulnerabilities[0].fixedIn, "1.2.6");
   });
 
+  test("sample-with-vulns.json includes aliases for CVE IDs", () => {
+    const report: Report = JSON.parse(
+      fs.readFileSync(path.join(FIXTURES, "reports/sample-with-vulns.json"), "utf-8")
+    );
+
+    const lodash = report.findings.find(f => f.name === "lodash");
+    assert.ok(lodash);
+    assert.deepStrictEqual(lodash.vulnerabilities[0].aliases, ["CVE-2021-23337"]);
+
+    const minimist = report.findings.find(f => f.name === "minimist");
+    assert.ok(minimist);
+    assert.deepStrictEqual(minimist.vulnerabilities[0].aliases, ["CVE-2021-44906"]);
+  });
+
   test("sample-no-vulns.json has zero vulnerable", () => {
     const report: Report = JSON.parse(
       fs.readFileSync(path.join(FIXTURES, "reports/sample-no-vulns.json"), "utf-8")
@@ -156,7 +172,7 @@ describe("generateReport", () => {
   test("calculates summary correctly with vulnerabilities", () => {
     const graph = createTestGraph();
     const vulns = createTestVulns();
-    
+
     const report = generateReport(graph, vulns, testMetadata);
 
     assert.strictEqual(report.summary.totalDependencies, 5);
@@ -197,6 +213,17 @@ describe("generateReport", () => {
     const lodash = report.findings.find(f => f.name === "lodash");
     assert.ok(lodash);
     assert.strictEqual(lodash.vulnerabilities[0].fixedIn, "4.17.21");
+  });
+
+  test("includes aliases (CVE IDs) in vulnerability findings", () => {
+    const graph = createTestGraph();
+    const vulns = createTestVulns();
+    
+    const report = generateReport(graph, vulns, testMetadata);
+
+    const lodash = report.findings.find(f => f.name === "lodash");
+    assert.ok(lodash);
+    assert.deepStrictEqual(lodash.vulnerabilities[0].aliases, ["CVE-2021-23337"]);
   });
 
   test("maps dependency types correctly", () => {
