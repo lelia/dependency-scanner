@@ -181,7 +181,11 @@ function printSummary(report: Report) {
 
   console.log("\n⚠️ Vulnerable packages:\n");
   for (const finding of vulnerable) {
-    const vulnIds = finding.vulnerabilities.map((v) => v.id).join(", ");
+    const vulnIds = finding.vulnerabilities.map((v) => {
+      // Show CVE alias in parentheses if available
+      const cve = v.aliases?.find((a) => a.startsWith("CVE-"));
+      return cve ? `${v.id} (${cve})` : v.id;
+    }).join(", ");
     console.log(`  ${finding.name}@${finding.version} (${finding.dependencyType})`);
     console.log(`    └─ ${finding.vulnerabilities.length} vuln(s): ${vulnIds}`);
   }
