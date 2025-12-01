@@ -1,7 +1,9 @@
 /**
- * Routes to parser based on package manifest and lockfile type.
+ * Parsers for dependency manifests and lockfiles.
  *
- * Ecosystems supported: npm (Node.js), pypi (Python)
+ * Supported ecosystems:
+ * - Node.js ("package-lock.json", "package.json", "yarn.lock")
+ * - Python ("requirements.txt", "poetry.lock", "Pipfile.lock")
  */
 
 import { DependencyGraph } from "../types";
@@ -9,18 +11,16 @@ import { parsePackageLock, parsePackageJson, parseYarnLock } from "./npm";
 import { parseRequirements, parsePoetryLock, parsePipfileLock } from "./pypi";
 
 const SUPPORTED_FILES = [
-  // npm filetypes
   "package-lock.json",
   "package.json",
   "yarn.lock",
-  // pypi filetypes
   "requirements.txt",
   "poetry.lock",
   "Pipfile.lock",
 ];
 
+// TODO: Consider reworking as filetypes continue to grow (factory pattern?)
 export function parse(filePath: string): DependencyGraph {
-  // npm ecosystem
   if (filePath.endsWith("package-lock.json")) {
     return parsePackageLock(filePath);
   }
@@ -31,7 +31,6 @@ export function parse(filePath: string): DependencyGraph {
     return parseYarnLock(filePath);
   }
 
-  // pypi ecosystem
   if (filePath.endsWith("requirements.txt")) {
     return parseRequirements(filePath);
   }

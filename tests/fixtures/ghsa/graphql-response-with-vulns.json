@@ -1,0 +1,22 @@
+{
+  "pkg_0_lodash": {
+    "nodes": [
+      {
+        "advisory": {
+          "ghsaId": "GHSA-jf85-cpcp-j695",
+          "summary": "Prototype Pollution in lodash",
+          "severity": "HIGH",
+          "references": [
+            { "url": "https://github.com/advisories/GHSA-jf85-cpcp-j695" }
+          ]
+        },
+        "vulnerableVersionRange": "< 4.17.21",
+        "firstPatchedVersion": { "identifier": "4.17.21" }
+      }
+    ]
+  },
+  "pkg_1_express": {
+    "nodes": []
+  }
+}
+

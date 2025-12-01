@@ -2,14 +2,16 @@
   "name": "dependency-scanner",
   "version": "1.0.0",
   "description": "A tool to scan dependency manifest files and report known vulnerabilities.",
-  "main": "dist/cli.js",
+  "main": "dist/src/cli.js",
   "bin": {
-    "dependency-scanner": "dist/cli.js"
+    "dependency-scanner": "dist/src/cli.js"
   },
   "scripts": {
+    "clean": "rm -rf dist",
     "build": "tsc",
+    "scan": "node dist/src/cli.js",
     "dev": "ts-node src/cli.ts",
-    "start": "node dist/cli.js",
+    "start": "node dist/src/cli.js",
     "test": "npm run build && node --test 'dist/tests/*.js'"
   },
   "repository": {
@@ -29,11 +31,14 @@
   },
   "homepage": "https://github.com/lelia/dependency-scanner#readme",
   "dependencies": {
-    "node-fetch": "^2.7.0"
+    "@octokit/graphql": "^9.0.3",
+    "node-fetch": "^2.7.0",
+    "semver": "^7.7.3"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
     "@types/node-fetch": "^2.6.12",
+    "@types/semver": "^7.7.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

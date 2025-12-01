@@ -1,6 +1,8 @@
 /**
  * Unit tests for filetype parsers and routing logic.
  * 
+ * Uses fixtures to test the parsers with known-good and malformed inputs.
+ *
  * Usage: npm run test
  */
 
@@ -43,7 +45,7 @@ describe("parse router", () => {
   });
 });
 
-// npm ecosystem tests
+// npm registry tests
 describe("parsePackageLock", () => {
   test("parses v2 lockfile", () => {
     const graph = parsePackageLock(path.join(FIXTURES, "npm/package-lock-v2.json"));
@@ -52,7 +54,7 @@ describe("parsePackageLock", () => {
     
     const lodash = graph.nodes.get("npm:lodash@4.17.21");
     assert.ok(lodash);
-    assert.strictEqual(lodash.ecosystem, "npm");
+    assert.strictEqual(lodash.registry, "npm");
   });
 
   test("parses v3 lockfile", () => {
@@ -74,7 +76,7 @@ describe("parsePackageLock", () => {
 
   test("throws on empty object", () => {
     assert.throws(
-      () => parsePackageLock(path.join(FIXTURES, "malformed/empty.json")),
+      () => parsePackageLock(path.join(FIXTURES, "malformed/parser-empty-object.json")),
       /packages/
     );
   });
@@ -89,7 +91,7 @@ describe("parsePackageJson", () => {
     // All should be marked as direct
     for (const node of graph.nodes.values()) {
       assert.strictEqual(node.dependencyType, "direct");
-      assert.strictEqual(node.ecosystem, "npm");
+      assert.strictEqual(node.registry, "npm");
     }
   });
 });
@@ -112,7 +114,7 @@ describe("parseYarnLock", () => {
   });
 });
 
-// pypi ecosystem tests
+// PyPI registry tests
 describe("parseRequirements", () => {
   test("parses clean requirements file", () => {
     const graph = parseRequirements(path.join(FIXTURES, "pypi/requirements-clean.txt"));
@@ -120,7 +122,7 @@ describe("parseRequirements", () => {
     
     const requests = graph.nodes.get("pypi:requests@2.31.0");
     assert.ok(requests);
-    assert.strictEqual(requests.ecosystem, "pypi");
+    assert.strictEqual(requests.registry, "pypi");
   });
 
   test("handles messy requirements file", () => {
@@ -182,7 +184,7 @@ describe("parsePipfileLock", () => {
 
   test("throws on invalid Pipfile.lock", () => {
     assert.throws(
-      () => parsePipfileLock(path.join(FIXTURES, "malformed/empty.json")),
+      () => parsePipfileLock(path.join(FIXTURES, "malformed/parser-empty-object.json")),
       /default.*develop/
     );
   });

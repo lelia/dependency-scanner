@@ -2,9 +2,16 @@
  * Generate report to summarize dependency and vulnerability findings.
  */
 
-import { DependencyGraph, DependencyType } from "./types";
-import { Vulnerability } from "./osv";
+import { DependencyGraph, DependencyType, DatabaseSource } from "./types";
+import { Vulnerability } from "./clients/types";
 import { getAllDependencies } from "./traverse";
+
+export interface ReportMetadata {
+  scannedFile: string;
+  sources: DatabaseSource[];
+  timestamp: string;
+  durationMs: number;
+}
 
 export interface Finding {
   id: string;
@@ -15,9 +22,13 @@ export interface Finding {
 }
 
 export interface Report {
+  metadata: ReportMetadata;
   summary: {
     totalDependencies: number;
+    directDependencies: number;
+    transitiveDependencies: number;
     vulnerableDependencies: number;
+    vulnerablePercentage: number;
   };
   findings: Finding[];
 }
@@ -25,6 +36,7 @@ export interface Report {
 export function generateReport(
   graph: DependencyGraph,
   vulns: Map<string, Vulnerability[]>,
+  metadata: ReportMetadata,
 ): Report {
   const deps = getAllDependencies(graph);
 
@@ -37,9 +49,21 @@ export function generateReport(
   }));
 
   const vulnerableDependencies = findings.filter((f) => f.vulnerabilities.length > 0).length;
+  const directDependencies = graph.roots.length;
+  const transitiveDependencies = findings.length - directDependencies;
+  const vulnerablePercentage = findings.length > 0
+    ? Math.round((vulnerableDependencies / findings.length) * 1000) / 10
+    : 0;
 
   return {
-    summary: { totalDependencies: findings.length, vulnerableDependencies },
+    metadata,
+    summary: {
+      totalDependencies: findings.length,
+      directDependencies,
+      transitiveDependencies,
+      vulnerableDependencies,
+      vulnerablePercentage,
+    },
     findings,
   };
 }
