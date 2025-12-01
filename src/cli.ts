@@ -6,14 +6,14 @@
  *   npx . [options] [file]
  *
  * Options:
- *   --database-source <osv|ghsa>  Vulnerability database (default: osv)
- *   --github-token <token>        GitHub token (required for GHSA GraphQL API)
+ *   --database-source <osv|ghsa>  Query single DB (default: both)
+ *   --github-token <token>        GitHub token (required for GHSA)
  *   --help                        Show help message
  *
  * Examples:
- *   npx .                           # Scan ./package-lock.json with OSV
- *   npx . --database-source ghsa    # Scan with GitHub Security Advisories
- *   npx . /path/to/requirements.txt
+ *   npx .                           # Scan with both OSV + GHSA
+ *   npx . --database-source osv     # OSV only
+ *   npx . --database-source ghsa    # GHSA only (requires token)
  *
  * For development: use `npm run dev` (no build needed).
  */
@@ -24,13 +24,14 @@ import { parse } from "./parsers";
 import { getAllDependencies } from "./traverse";
 import { checkOsvVulnerabilities } from "./clients/osv";
 import { checkGhsaVulnerabilities } from "./clients/ghsa";
+import { mergeVulnMaps } from "./clients/merge";
 import { generateReport, Report } from "./report";
 import { Vulnerability } from "./clients/types";
 import { DependencyNode, DatabaseSource } from "./types";
 
 interface CliOptions {
   filePath: string;
-  source: DatabaseSource;
+  source?: DatabaseSource;
   githubToken?: string;
 }
 
@@ -39,13 +40,14 @@ function printHelp() {
 Usage: npx . [options] [file]
 
 Options:
-  --database-source <osv|ghsa>  Vulnerability database (default: osv)
+  --database-source <osv|ghsa>  Query single DB only (default: both)
   --github-token <token>        GitHub token for GHSA (or set GITHUB_TOKEN)
   --help                        Show this help message
 
 Examples:
-  npx .                           Scan ./package-lock.json with OSV
-  npx . --database-source ghsa    Scan with GitHub Security Advisories
+  npx .                           Scan with both OSV + GHSA (merged)
+  npx . --database-source osv     OSV only
+  npx . --database-source ghsa    GHSA only (requires token)
   npx . /path/to/yarn.lock        Scan specific file
 `);
   process.exit(0);
@@ -54,7 +56,7 @@ Examples:
 function parseArgs(): CliOptions {
   const args = process.argv.slice(2);
   let filePath = path.join(process.cwd(), "package-lock.json");
-  let source: DatabaseSource = "osv";
+  let source: DatabaseSource | undefined;
   let githubToken: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
@@ -81,15 +83,36 @@ function parseArgs(): CliOptions {
 
 async function checkVulnerabilities(
   deps: DependencyNode[],
-  source: DatabaseSource,
+  source: DatabaseSource | undefined,
   githubToken?: string,
-): Promise<Map<string, Vulnerability[]>> {
-  switch (source) {
-    case "osv":
-      return checkOsvVulnerabilities(deps);
-    case "ghsa":
-      return checkGhsaVulnerabilities(deps, githubToken);
+): Promise<{ vulns: Map<string, Vulnerability[]>; sources: DatabaseSource[] }> {
+  // Single source: OSV (no auth needed)
+  if (source === "osv") {
+    return { vulns: await checkOsvVulnerabilities(deps), sources: ["osv"] };
   }
+
+  // Single source: GHSA (requires token)
+  if (source === "ghsa") {
+    return { vulns: await checkGhsaVulnerabilities(deps, githubToken), sources: ["ghsa"] };
+  }
+
+  // Default: both sources (fall back to OSV if no token provided)
+  const authToken = githubToken || process.env.GITHUB_TOKEN;
+
+  if (!authToken) {
+    return { vulns: await checkOsvVulnerabilities(deps), sources: ["osv"] };
+  }
+
+  // Query both in parallel, then merge
+  const [osvResults, ghsaResults] = await Promise.all([
+    checkOsvVulnerabilities(deps),
+    checkGhsaVulnerabilities(deps, githubToken),
+  ]);
+
+  return {
+    vulns: mergeVulnMaps([osvResults, ghsaResults]),
+    sources: ["osv", "ghsa"],
+  };
 }
 
 async function main() {
@@ -103,14 +126,21 @@ async function main() {
   const transitive = deps.length - graph.roots.length;
   console.log(`📦 Found ${deps.length} dependencies (${graph.roots.length} direct, ${transitive} transitive)`);
 
-  const sourceLabel = source === "osv" ? "OSV.dev" : "GitHub Security Advisories";
+  // Determine which sources to query
+  const authToken = githubToken || process.env.GITHUB_TOKEN;
+  const willQueryBoth = !source && authToken;
+  const sourceLabel = source
+    ? (source === "osv" ? "OSV.dev" : "GitHub Security Advisories")
+    : (willQueryBoth ? "OSV.dev 🤝 GitHub Security Advisories" : "OSV.dev");
+
   console.log(`\n🔍 Checking ${sourceLabel} for known vulnerabilities...`);
-  const vulns = await checkVulnerabilities(deps, source, githubToken);
+
+  const { vulns, sources } = await checkVulnerabilities(deps, source, githubToken);
 
   const durationMs = Date.now() - startTime;
   const report = generateReport(graph, vulns, {
     scannedFile: filePath,
-    sources: [source],
+    sources,
     timestamp: new Date().toISOString(),
     durationMs,
   });

@@ -33,7 +33,7 @@ const sampleDeps: DependencyNode[] = [
   },
 ];
 
-describe("OSV client", () => {
+describe("osv fixtures", () => {
   test("fixture has correct structure for response with vulns", () => {
     const fixtureData = JSON.parse(
       fs.readFileSync(path.join(FIXTURES, "osv/batch-response-with-vulns.json"), "utf-8")
@@ -101,7 +101,7 @@ describe("OSV client", () => {
   });
 });
 
-describe("GHSA client", () => {
+describe("ghsa fixtures", () => {
   test("parses GraphQL response with vulnerabilities", async () => {
     const fixtureData = JSON.parse(
       fs.readFileSync(path.join(FIXTURES, "ghsa/graphql-response-with-vulns.json"), "utf-8")
@@ -132,9 +132,8 @@ describe("GHSA client", () => {
   });
 });
 
-describe("Malformed API responses", () => {
-  // These fixtures document edge cases our clients should handle gracefully
-  // Actual resilience testing would require mocking the network layer
+describe("malformed fixtures", () => {
+  // Edge cases clients should handle; actual resilience needs network mocking
   
   test("OSV: missing results array", () => {
     const data = JSON.parse(
@@ -178,9 +177,8 @@ describe("Malformed API responses", () => {
   });
 });
 
-describe("Version matching (semver)", () => {
-  // GHSA client uses semver package for accurate version matching
-  // OSV does server-side matching, so no client-side semver needed there
+describe("semver matching", () => {
+  // GHSA client uses semver for version matching; OSV does server-side matching
   
   const semver = require("semver");
   

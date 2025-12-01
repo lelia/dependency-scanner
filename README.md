@@ -6,12 +6,13 @@ A CLI tool to scan dependency manifests and lockfiles for known vulnerabilities.
 
 - Parses dependency file (lockfile preferred, manifest as fallback)
 - Builds a dependency graph (direct and transitive where available)
-- Queries vulnerability databases (selectable via `--database-source` flag):
+- Queries vulnerability databases (both by default, or single via `--database-source`):
   - [Open Source Vulnerabilities](https://osv.dev/list) (OSV.dev)
   - [GitHub Security Advisories](https://github.com/advisories) (GHSA)
+- Merges and deduplicates results when querying both databases
 - Prints the summary of findings to console and generates a `report.json` file
 
-## Supported filetypes
+### Supported filetypes
 
 | Ecosystem | Filename | Type | Notes |
 |-----------|----------|------|-------|
@@ -21,6 +22,17 @@ A CLI tool to scan dependency manifests and lockfiles for known vulnerabilities.
 | **Python** | `poetry.lock` | Lockfile | Full dependency tree |
 | **Python** | `Pipfile.lock` | Lockfile | Full dependency tree |
 | **Python** | `requirements.txt` | Manifest | Direct dependencies only |
+
+### Merge strategy
+
+When querying both vulnerability databases, results are merged using the following strategy:
+
+| Field | Strategy |
+|-------|----------|
+| Severity | Highest (most conservative) |
+| Summary | Longer description preferred |
+| References | Union (combine both, dedupe by URL) |
+| Fix version | Prefer explicit over missing |
 
 ### Known limitations
 
@@ -50,7 +62,7 @@ npx .         # Run the CLI (see options below)
 
 #### GitHub Token
 
-A GitHub [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) is **required** to query GHSA. The GitHub GraphQL API does not allow unauthenticated requests, and the REST API does not support batched querying needed for this tool.
+A GitHub [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) is required to query GHSA using GraphQL. When running in default mode, the tool will fall back to only querying OSV if no token is provided. However, when using the `--database-source ghsa` CLI flag, the token is required and will error without one.
 
 > 💡 Create a fine-grained PAT [here](https://github.com/settings/personal-access-tokens/new). No special scopes are needed for public advisory data.
 
@@ -59,7 +71,7 @@ A GitHub [personal access token](https://docs.github.com/en/authentication/keepi
 export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
 
 # Option 2: CLI flag
-npx . --database-source ghsa --github-token ghp_xxxxxxxxxxxx
+npx . --github-token ghp_xxxxxxxxxxxx
 ```
 
 ### CLI config
@@ -67,15 +79,15 @@ npx . --database-source ghsa --github-token ghp_xxxxxxxxxxxx
 | Option | Default | Description |
 |--------|---------|-------------|
 | `[file]` | `./package-lock.json` | Path to lockfile or manifest to scan |
-| `--database-source` | `osv` | Vulnerability database to query: `osv` or `ghsa` |
-| `--github-token` | `$GITHUB_TOKEN` | GitHub PAT (**required** for GHSA) |
+| `--database-source` | both | Query single DB only: `osv` or `ghsa` |
+| `--github-token` | `$GITHUB_TOKEN` | GitHub PAT for GHSA queries |
 
 ### CLI examples
 
 ```bash
-npx .                                       # Scan ./package-lock.json with OSV
-npx . --database-source ghsa                # Scan with GHSA instead
-npx . --github-token ghp_xxxx               # GHSA with explicit token
+npx .                                       # Scan with both OSV + GHSA
+npx . --database-source osv                 # OSV only
+npx . --database-source ghsa                # GHSA only (requires token)
 npx . /path/to/requirements.txt             # Scan a Python manifest
 npx . --help                                # Show help
 ```
@@ -86,7 +98,7 @@ npx . --help                                # Show help
 Scanning: /path/to/project/package-lock.json
 📦 Found 45 dependencies (5 direct, 40 transitive)
 
-🔍 Checking OSV.dev for known vulnerabilities...
+🔍 Checking OSV.dev 🤝 GitHub Security Advisories for known vulnerabilities...
 
 ──────────────────────────────────────────────────
 Total Dependencies: 45  |  Vulnerable: 2 (4.4%)
@@ -101,7 +113,7 @@ Total Dependencies: 45  |  Vulnerable: 2 (4.4%)
     └─ 1 vuln(s): GHSA-xvch-5gv4-984h
 
 Full report: /path/to/project/report.json
-⏱️  Completed in 0.42s
+⏱️  Completed in 0.58s
 ```
 
 > 💡 For CI purposes, the tool exits 1 if vulnerabilities are found, otherwise exits 0.
@@ -117,7 +129,7 @@ npm run test  # Run unit tests
 npm run clean # Deletes dist/ (for fresh build)
 ```
 
-## Testing
+### Testing
 
 ```bash
 npm run test # Run unit tests
@@ -128,7 +140,7 @@ Unit tests currently cover filetype parsers and database clients using fixture f
 
 > 💡 Test coverage could be expanded with additional unit tests for the CLI and graph traversal. Integration tests could make API client testing more robust by introducing live network calls.
 
-### Test fixtures
+#### Test fixtures
 
 Sample files for unit testing and general development reference:
 

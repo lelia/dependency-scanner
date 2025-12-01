@@ -24,7 +24,7 @@ import {
 const FIXTURES = path.join(process.cwd(), "tests/fixtures");
 
 // Parser router tests
-describe("parse router", () => {
+describe("parse", () => {
   test("routes package-lock.json to npm parser", () => {
     const graph = parse(path.join(FIXTURES, "npm/package-lock.json"));
     assert.ok(graph.nodes.size > 0);
