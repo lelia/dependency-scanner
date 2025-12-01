@@ -144,7 +144,7 @@ async function main() {
 
   // Apply ignore list (from .scanignore or --ignore-file)
   const ignoreList = loadIgnoreList(filePath, ignoreFile);
-  const { filtered: filteredVulns, ignoredCount } = filterIgnored(vulns, ignoreList);
+  const { filtered: filteredVulns, ignoredCount, ignoredIds } = filterIgnored(vulns, ignoreList);
 
   const durationMs = Date.now() - startTime;
   const report = generateReport(graph, filteredVulns, {
@@ -152,7 +152,8 @@ async function main() {
     sources,
     timestamp: new Date().toISOString(),
     durationMs,
-    ignoredCount,
+    ignoredCount: ignoredCount > 0 ? ignoredCount : undefined,
+    ignoredIds: ignoredIds.length > 0 ? ignoredIds : undefined,
   });
   printSummary(report, ignoredCount);
 
