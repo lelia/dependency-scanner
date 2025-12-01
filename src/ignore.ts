@@ -75,16 +75,22 @@ function parseIgnoreFile(ignorePath: string, ignored: Set<string>): Set<string> 
 /**
  * Filter vulnerabilities, removing any with IDs in the ignore list.
  * Also checks aliases (CVE IDs) for matches.
+ * Returns the filtered vulns, count of ignored, and list of matched IDs.
  */
 export function filterIgnored(
   vulns: Map<string, import("./clients/types").Vulnerability[]>,
   ignored: Set<string>,
-): { filtered: Map<string, import("./clients/types").Vulnerability[]>; ignoredCount: number } {
+): {
+  filtered: Map<string, import("./clients/types").Vulnerability[]>;
+  ignoredCount: number;
+  ignoredIds: string[];
+} {
   if (ignored.size === 0) {
-    return { filtered: vulns, ignoredCount: 0 };
+    return { filtered: vulns, ignoredCount: 0, ignoredIds: [] };
   }
 
   let ignoredCount = 0;
+  const matchedIds = new Set<string>();
   const filtered = new Map<string, import("./clients/types").Vulnerability[]>();
 
   for (const [depId, depVulns] of vulns) {
@@ -92,12 +98,15 @@ export function filterIgnored(
       // Check if the primary ID is ignored
       if (ignored.has(v.id)) {
         ignoredCount++;
+        matchedIds.add(v.id);
         return false;
       }
 
       // Check if any alias (CVE ID) is ignored
-      if (v.aliases?.some((alias) => ignored.has(alias))) {
+      const matchedAlias = v.aliases?.find((alias) => ignored.has(alias));
+      if (matchedAlias) {
         ignoredCount++;
+        matchedIds.add(matchedAlias);
         return false;
       }
 
@@ -107,6 +116,6 @@ export function filterIgnored(
     filtered.set(depId, kept);
   }
 
-  return { filtered, ignoredCount };
+  return { filtered, ignoredCount, ignoredIds: [...matchedIds].sort() };
 }
 
