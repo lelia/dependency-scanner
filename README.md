@@ -43,24 +43,23 @@ A CLI tool to scan dependency manifests and lockfiles for known vulnerabilities.
 [Node.js](https://node.jsorg) v18+ is required. The tool was tested and developed with [v24.9.0](https://nodejs.org/en/blog/release/v24.9.0).
 
 ```bash
-npm install   # Install node dependencies
-npm run build # Build dependency-scanner tool
-
-npx dependency-scanner # Run the built CLI tool
+npm install   # Install dependencies
+npm run build # Build the tool
+npx .         # Run the CLI (see options below)
 ```
 
 #### GitHub Token
 
-While a GitHub [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) is not required to query GHSA, the API [rate limits queries](https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api) to 60 reqs/hr without authentication. With a valid PAT, the rate limit increases to 5000 reqs/hr. 
+A GitHub [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) (PAT) is **required** to query GHSA. The GitHub GraphQL API does not allow unauthenticated requests, and the REST API does not support batched querying needed for this tool.
 
-> 💡 Create a new fine-grained personal access token on GitHub [here](https://github.com/settings/personal-access-tokens/new).
+> 💡 Create a fine-grained PAT [here](https://github.com/settings/personal-access-tokens/new). No special scopes are needed for public advisory data.
 
 ```bash
-# Option 1: Export as environment variable
+# Option 1: Environment variable
 export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
 
-# Option 2: Pass as CLI flag
-npx dependency-scanner --database-source ghsa --github-token ghp_xxxxxxxxxxxx
+# Option 2: CLI flag
+npx . --database-source ghsa --github-token ghp_xxxxxxxxxxxx
 ```
 
 ### CLI config
@@ -69,25 +68,16 @@ npx dependency-scanner --database-source ghsa --github-token ghp_xxxxxxxxxxxx
 |--------|---------|-------------|
 | `[file]` | `./package-lock.json` | Path to lockfile or manifest to scan |
 | `--database-source` | `osv` | Vulnerability database to query: `osv` or `ghsa` |
-| `--github-token` | `$GITHUB_TOKEN` | GitHub PAT for GHSA queries (increases rate limit) |
+| `--github-token` | `$GITHUB_TOKEN` | GitHub PAT (**required** for GHSA) |
 
 ### CLI examples
 
 ```bash
-# Default: Scan ./package-lock.json with OSV
-npx dependency-scanner
-
-# Scan with GHSA instead of OSV
-npx dependency-scanner --database-source ghsa
-
-# Scan with GHSA using personal access token
-npx dependency-scanner --database-source ghsa --github-token ghp_xxxx
-
-# Scan a Python manifest
-npx dependency-scanner /path/to/requirements.txt
-
-# Scan a Yarn lockfile
-npx dependency-scanner /path/to/yarn.lock
+npx .                                       # Scan ./package-lock.json with OSV
+npx . --database-source ghsa                # Scan with GHSA instead
+npx . --github-token ghp_xxxx               # GHSA with explicit token
+npx . /path/to/requirements.txt             # Scan a Python manifest
+npx . --help                                # Show help
 ```
 
 ### Sample output
@@ -117,11 +107,10 @@ A detailed `report.json` file is generated with full vulnerability information f
 ## Developing
 
 ```bash
-npm install  # Install dependencies
-npm run test # Run unit tests (see below)
-
-npm run dev                   # Scan default package-lock.json
-npm run dev -- /path/to/file  # Scan specific file
+npm run dev   # Run CLI via ts-node (no build needed, ideal for iteration)
+npm run build # Compile TypeScript
+npm run test  # Run unit tests
+npm run clean # Delete dist/ (if you need a fresh build)
 ```
 
 ## Testing
@@ -130,7 +119,7 @@ Usage: `npm run test`
 
 Unit tests currently cover filetype parsers and database clients using fixture files.
 
-Test coverage could be expanded with additional unit tests for the CLI, report generation and graph traversal. Integration tests could make API client testing more robust by introducing live network calls.
+> 💡 Test coverage could be expanded with additional unit tests for the CLI, report generation and graph traversal. Integration tests could make API client testing more robust by introducing live network calls.
 
 ### Test fixtures
 
