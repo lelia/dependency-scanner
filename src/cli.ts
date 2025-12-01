@@ -10,10 +10,8 @@
  *   --github-token <token>        GitHub token (required for GHSA)
  *   --help                        Show help message
  *
- * Examples:
- *   npx .                           # Scan with both OSV + GHSA
- *   npx . --database-source osv     # OSV only
- *   npx . --database-source ghsa    # GHSA only (requires token)
+ * Ignore file:
+ *   Create a .scanignore file with vulnerability IDs (one per line) to suppress.
  *
  * For development: use `npm run dev` (no build needed).
  */
@@ -25,6 +23,7 @@ import { getAllDependencies } from "./traverse";
 import { checkOsvVulnerabilities } from "./clients/osv";
 import { checkGhsaVulnerabilities } from "./clients/ghsa";
 import { mergeVulnMaps } from "./clients/merge";
+import { loadIgnoreList, filterIgnored } from "./ignore";
 import { generateReport, Report } from "./report";
 import { Vulnerability } from "./clients/types";
 import { DependencyNode, DatabaseSource } from "./types";
@@ -33,6 +32,7 @@ interface CliOptions {
   filePath: string;
   source?: DatabaseSource;
   githubToken?: string;
+  ignoreFile?: string;
 }
 
 function printHelp() {
@@ -42,6 +42,7 @@ Usage: npx . [options] [file]
 Options:
   --database-source <osv|ghsa>  Query single DB only (default: both)
   --github-token <token>        GitHub token for GHSA (or set GITHUB_TOKEN)
+  --ignore-file <path>          Path to ignore file (default: .scanignore)
   --help                        Show this help message
 
 Examples:
@@ -49,6 +50,7 @@ Examples:
   npx . --database-source osv     OSV only
   npx . --database-source ghsa    GHSA only (requires token)
   npx . /path/to/yarn.lock        Scan specific file
+  npx . --ignore-file .ci-ignore  Use custom ignore file
 `);
   process.exit(0);
 }
@@ -58,6 +60,7 @@ function parseArgs(): CliOptions {
   let filePath = path.join(process.cwd(), "package-lock.json");
   let source: DatabaseSource | undefined;
   let githubToken: string | undefined;
+  let ignoreFile: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -73,12 +76,14 @@ function parseArgs(): CliOptions {
       source = value;
     } else if (arg === "--github-token") {
       githubToken = args[++i];
+    } else if (arg === "--ignore-file") {
+      ignoreFile = args[++i];
     } else if (!arg.startsWith("-")) {
       filePath = arg;
     }
   }
 
-  return { filePath, source, githubToken };
+  return { filePath, source, githubToken, ignoreFile };
 }
 
 async function checkVulnerabilities(
@@ -117,7 +122,7 @@ async function checkVulnerabilities(
 
 async function main() {
   const startTime = Date.now();
-  const { filePath, source, githubToken } = parseArgs();
+  const { filePath, source, githubToken, ignoreFile } = parseArgs();
 
   console.log(`Scanning: ${filePath}`);
 
@@ -137,14 +142,19 @@ async function main() {
 
   const { vulns, sources } = await checkVulnerabilities(deps, source, githubToken);
 
+  // Apply ignore list (from .scanignore or --ignore-file)
+  const ignoreList = loadIgnoreList(filePath, ignoreFile);
+  const { filtered: filteredVulns, ignoredCount } = filterIgnored(vulns, ignoreList);
+
   const durationMs = Date.now() - startTime;
-  const report = generateReport(graph, vulns, {
+  const report = generateReport(graph, filteredVulns, {
     scannedFile: filePath,
     sources,
     timestamp: new Date().toISOString(),
     durationMs,
+    ignoredCount,
   });
-  printSummary(report);
+  printSummary(report, ignoredCount);
 
   const outputPath = path.join(process.cwd(), "report.json");
   fs.writeFileSync(outputPath, JSON.stringify(report, null, 2));
@@ -162,14 +172,18 @@ async function main() {
 /**
  * Print summary of the report to the console.
  */
-function printSummary(report: Report) {
+function printSummary(report: Report, ignoredCount: number) {
   const { summary, findings } = report;
   const percent = summary.totalDependencies > 0
     ? ((summary.vulnerableDependencies / summary.totalDependencies) * 100).toFixed(1)
     : "0.0";
 
   console.log("\n" + "─".repeat(50));
-  console.log(`Total Dependencies: ${summary.totalDependencies}  |  Vulnerable: ${summary.vulnerableDependencies} (${percent}%)`);
+  let summaryLine = `Total Dependencies: ${summary.totalDependencies}  |  Vulnerable: ${summary.vulnerableDependencies} (${percent}%)`;
+  if (ignoredCount > 0) {
+    summaryLine += `  |  Ignored: ${ignoredCount}`;
+  }
+  console.log(summaryLine);
   console.log("─".repeat(50));
 
   const vulnerable = findings.filter((f) => f.vulnerabilities.length > 0);
