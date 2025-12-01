@@ -1,12 +1,12 @@
 /**
  * Client for GHSA (GitHub Security Advisory) database.
  *
- * Uses GraphQL instead of REST API to query per-package and matches versions client-side.
- * Note: REST API returns *all* advisories for an ecosystem, and would require client-side filtering.
+ * Uses GraphQL API to query per-package vulnerabilities and matches versions client-side.
+ * The REST API does not support batch queries, instead returning ALL advisories for an ecosystem.
  *
- * GitHub token optional but recommended to increase rate limits from 60 reqs/hr to 5000 reqs/hr.
- * Usage: Export as environment variable (`GITHUB_TOKEN`) or pass as CLI flag (`--github-token`).
-
+ * Note: GraphQL API requires authentication (REST allows unauthenticated access).
+ * Export as environment variable (`GITHUB_TOKEN`) or pass as CLI flag (`--github-token`).
+ *
  * Ref: https://docs.github.com/en/graphql/reference/objects#securityvulnerability
  */
 
@@ -53,20 +53,24 @@ export async function checkGhsaVulnerabilities(
     deps: DependencyNode[],
     token?: string,
 ): Promise<Map<string, Vulnerability[]>> {
+    const results = new Map<string, Vulnerability[]>();
     const authToken = token || process.env.GITHUB_TOKEN;
 
     if (!authToken) {
-        console.warn("⚠️ No GitHub token provided. GHSA queries limited to 60 req/hr.");
-        console.warn("Use --github-token or set GITHUB_TOKEN for higher rate limits.\n");
+        console.log("\n❌ GitHub GraphQL API requires authentication.");
+        console.log("   Use --github-token <token> or set GITHUB_TOKEN env var.\n");
+        // Return empty results - don't fall back to OSV when GHSA explicitly requested
+        for (const dep of deps) {
+            results.set(dep.id, []);
+        }
+        return results;
     }
 
     const gql = graphql.defaults({
         headers: {
-            authorization: authToken ? `token ${authToken}` : "",
+            authorization: `token ${authToken}`,
         },
     });
-
-    const results = new Map<string, Vulnerability[]>();
 
     const byRegistry = new Map<PackageRegistry, DependencyNode[]>();
     for (const dep of deps) {
