@@ -84,14 +84,15 @@ npx . --help                                # Show help
 
 ```
 Scanning: /path/to/project/package-lock.json
-Found 45 dependencies (5 direct)
-Checking OSV.dev for known vulnerabilities...
+📦 Found 45 dependencies (5 direct, 40 transitive)
+
+🔍 Checking OSV.dev for known vulnerabilities...
 
 ──────────────────────────────────────────────────
 Total Dependencies: 45  |  Vulnerable: 2 (4.4%)
 ──────────────────────────────────────────────────
 
-⚠️ Vulnerable packages:
+⚠️  Vulnerable packages:
 
   lodash@4.17.20 (transitive)
     └─ 1 vuln(s): GHSA-jf85-cpcp-j695
@@ -100,7 +101,10 @@ Total Dependencies: 45  |  Vulnerable: 2 (4.4%)
     └─ 1 vuln(s): GHSA-xvch-5gv4-984h
 
 Full report: /path/to/project/report.json
+⏱️  Completed in 0.42s
 ```
+
+> 💡 For CI purposes, the tool exits 1 if vulnerabilities are found, otherwise exits 0.
 
 A detailed `report.json` file is generated with full vulnerability information for each dependency.
 
