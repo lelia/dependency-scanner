@@ -73,7 +73,7 @@ describe("OSV client", () => {
 
     const vuln = fixtureData.results[0].vulns[0];
     
-    // Required fields our Vulnerability interface expects
+    // Required fields the Vulnerability interface expects
     assert.ok(typeof vuln.id === "string");
     assert.ok(typeof vuln.summary === "string");
     assert.ok(Array.isArray(vuln.severity));
@@ -81,6 +81,23 @@ describe("OSV client", () => {
     assert.ok(vuln.severity[0].score);
     assert.ok(Array.isArray(vuln.references));
     assert.ok(vuln.references[0].url);
+  });
+
+  test("fixture contains fix info in affected ranges", () => {
+    const fixtureData = JSON.parse(
+      fs.readFileSync(path.join(FIXTURES, "osv/batch-response-with-vulns.json"), "utf-8")
+    );
+
+    const vuln = fixtureData.results[0].vulns[0];
+
+    // Fix info is in affected[].ranges[].events[].fixed
+    assert.ok(Array.isArray(vuln.affected));
+    assert.ok(Array.isArray(vuln.affected[0].ranges));
+    assert.ok(Array.isArray(vuln.affected[0].ranges[0].events));
+
+    const fixedEvent = vuln.affected[0].ranges[0].events.find((e: any) => e.fixed);
+    assert.ok(fixedEvent);
+    assert.strictEqual(fixedEvent.fixed, "4.17.21");
   });
 });
 
