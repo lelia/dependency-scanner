@@ -1,18 +1,11 @@
 /**
- * Routes to API client based on request ecosystem.
+ * Vulnerability database clients.
  *
- * Current ecosystems supported: 
- * - OSV.dev (Open Source Vulnerability)
- * - GHSA (GitHub Security Advisory)
+ * Supported databases:
+ * - Open Source Vulnerabilities: https://osv.dev/list
+ * - GitHub Security Advisories: https://github.com/advisories
  */
 
-import { Ecosystem } from "../types";
-import { checkVulnerabilities } from "./osv";
-
-// TODO: Implement stubbed out client for GHSA
-export function getClient(ecosystem: Ecosystem): Client {
-  if (ecosystem === "osv") {
-    return checkVulnerabilities;
-  }
-  return null;
-}
+export { Vulnerability } from "./types";
+export { checkOsvVulnerabilities } from "./osv";
+export { checkGhsaVulnerabilities } from "./ghsa";
