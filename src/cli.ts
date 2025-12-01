@@ -162,7 +162,7 @@ async function main() {
 
   const elapsed = (durationMs / 1000).toFixed(2);
   console.log(`\nFull report: ${outputPath}`);
-  console.log(`⏱️  Completed in ${elapsed} seconds`);
+  console.log(`\n⏱️  Completed in ${elapsed} seconds`);
 
   // Exit with code 1 if vulnerabilities are found
   if (report.summary.vulnerableDependencies > 0) {
