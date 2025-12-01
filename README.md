@@ -40,12 +40,9 @@ When querying both vulnerability databases, results are merged using the followi
 
 - Lockfiles (`package-lock.json`, `yarn.lock`, `poetry.lock`, `Pipfile.lock`) contain the full resolved dependency tree, including transitive dependencies
 - Manifest files (`package.json`, `requirements.txt`) only list direct dependencies, as there's no way to discover transitive deps without a package manager
+  - `requirements.txt` files containing version ranges (eg., `requests>=2.0`) may not match exact vulnerability ranges
 
 > 💡 When scanning a manifest file, **only direct dependencies are checked and a warning is printed to the console**. Future versions may auto-detect the appropriate lockfile in the target project, or optionally invoke package managers for full resolution.
-
-#### Ecosystem constraints
-
-- `requirements.txt` files containing version ranges (eg., `requests>=2.0`) may not match exact vulnerability ranges
 
 ## Getting started
 
