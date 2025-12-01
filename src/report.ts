@@ -11,6 +11,7 @@ export interface ReportMetadata {
   sources: DatabaseSource[];
   timestamp: string;
   durationMs: number;
+  ignoredCount?: number;
 }
 
 export interface Finding {
