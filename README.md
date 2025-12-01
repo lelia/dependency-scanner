@@ -16,7 +16,7 @@ A CLI tool to scan dependency manifests and lockfiles for known vulnerabilities.
 
 | Ecosystem | Filename | Type | Notes |
 |-----------|----------|------|-------|
-| **Node.js** | `package-lock.json` | Lockfile | v2 and v3 format (npm v7+) |
+| **Node.js** | `package-lock.json` | Lockfile | v1, v2, and v3 formats |
 | **Node.js** | `yarn.lock` | Lockfile | v1 (classic) and v2+ (Berry) |
 | **Node.js** | `package.json` | Manifest | Direct dependencies only |
 | **Python** | `poetry.lock` | Lockfile | Full dependency tree |
