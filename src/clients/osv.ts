@@ -1,8 +1,8 @@
 /**
  * Client for OSV.dev (Open Source Vulnerability) database.
  * 
- * Uses batch query REST API to send all packages in one request and get back matching vulns.
- * No auth required, aggregates from multiple sources (including GHSA) and matches versions server-side.
+ * Uses batch query REST API to send all packages in one request and matches versions server-side.
+ * No auth required, aggregates from multiple sources (including GHSA).
  *
  * Ref: https://google.github.io/osv.dev/post-v1-querybatch/
  */
