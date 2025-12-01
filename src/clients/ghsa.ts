@@ -1,8 +1,8 @@
 /**
  * Client for GHSA (GitHub Security Advisory) database.
  *
- * Uses GraphQL instead of REST API to query per-package, similar to OSV.dev batch query endpoint.
- * The REST API returns *all* advisories for an ecosystem, and would require client-side filtering.
+ * Uses GraphQL instead of REST API to query per-package and matches versions client-side.
+ * Note: REST API returns *all* advisories for an ecosystem, and would require client-side filtering.
  *
  * GitHub token optional but recommended to increase rate limits from 60 reqs/hr to 5000 reqs/hr.
  * Usage: Export as environment variable (`GITHUB_TOKEN`) or pass as CLI flag (`--github-token`).
