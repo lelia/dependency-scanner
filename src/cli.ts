@@ -86,14 +86,24 @@ async function checkVulnerabilities(
   source: DatabaseSource | undefined,
   githubToken?: string,
 ): Promise<{ vulns: Map<string, Vulnerability[]>; sources: DatabaseSource[] }> {
+  // Single source: OSV (no auth needed)
   if (source === "osv") {
     return { vulns: await checkOsvVulnerabilities(deps), sources: ["osv"] };
   }
+
+  // Single source: GHSA (requires token)
   if (source === "ghsa") {
     return { vulns: await checkGhsaVulnerabilities(deps, githubToken), sources: ["ghsa"] };
   }
 
-  // Query both sources in parallel, then merge results
+  // Default: both sources (fall back to OSV if no token provided)
+  const authToken = githubToken || process.env.GITHUB_TOKEN;
+
+  if (!authToken) {
+    return { vulns: await checkOsvVulnerabilities(deps), sources: ["osv"] };
+  }
+
+  // Query both in parallel, then merge
   const [osvResults, ghsaResults] = await Promise.all([
     checkOsvVulnerabilities(deps),
     checkGhsaVulnerabilities(deps, githubToken),
@@ -117,9 +127,12 @@ async function main() {
   console.log(`📦 Found ${deps.length} dependencies (${graph.roots.length} direct, ${transitive} transitive)`);
 
   // Determine which sources to query
+  const authToken = githubToken || process.env.GITHUB_TOKEN;
+  const willQueryBoth = !source && authToken;
   const sourceLabel = source
     ? (source === "osv" ? "OSV.dev" : "GitHub Security Advisories")
-    : "OSV.dev 🤝 GitHub Security Advisories";
+    : (willQueryBoth ? "OSV.dev 🤝 GitHub Security Advisories" : "OSV.dev");
+
   console.log(`\n🔍 Checking ${sourceLabel} for known vulnerabilities...`);
 
   const { vulns, sources } = await checkVulnerabilities(deps, source, githubToken);
