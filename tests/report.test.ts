@@ -204,6 +204,16 @@ describe("generateReport", () => {
     assert.strictEqual(report.metadata.durationMs, testMetadata.durationMs);
   });
 
+  test("includes ignoredCount in metadata when provided", () => {
+    const graph = createTestGraph();
+    const vulns = new Map<string, Vulnerability[]>();
+    const metadataWithIgnored = { ...testMetadata, ignoredCount: 5 };
+    
+    const report = generateReport(graph, vulns, metadataWithIgnored);
+
+    assert.strictEqual(report.metadata.ignoredCount, 5);
+  });
+
   test("includes fixedIn in vulnerability findings", () => {
     const graph = createTestGraph();
     const vulns = createTestVulns();
