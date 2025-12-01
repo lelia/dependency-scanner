@@ -1,7 +1,7 @@
 /**
- * Unit tests for JSON report generation.
+ * Unit tests for report generation.
  * 
- * Uses fixtures to test report generation with and without vulnerabilities.
+ * Tests the generateReport function and validates the report structure.
  * 
  * Usage: npm run test
  */
@@ -101,7 +101,7 @@ const testMetadata = {
   durationMs: 450,
 };
 
-describe("Report fixtures", () => {
+describe("report fixtures", () => {
   test("sample-with-vulns.json has correct structure", () => {
     const report: Report = JSON.parse(
       fs.readFileSync(path.join(FIXTURES, "reports/sample-with-vulns.json"), "utf-8")
