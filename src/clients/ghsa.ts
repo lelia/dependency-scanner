@@ -11,6 +11,7 @@
  */
 
 import { graphql } from "@octokit/graphql";
+import * as semver from "semver";
 import { DependencyNode, PackageRegistry } from "../types";
 import { Vulnerability } from "./types";
 
@@ -59,7 +60,6 @@ export async function checkGhsaVulnerabilities(
     if (!authToken) {
         console.log("\n❌ GitHub GraphQL API requires authentication.");
         console.log("   Use --github-token <token> or set GITHUB_TOKEN env var.\n");
-        // Return empty results - don't fall back to OSV when GHSA explicitly requested
         for (const dep of deps) {
             results.set(dep.id, []);
         }
@@ -114,9 +114,13 @@ export async function checkGhsaVulnerabilities(
                 const vulnNodes = response[alias]?.nodes || [];
 
                 const matching: Vulnerability[] = [];
+                const seenIds = new Set<string>();
 
                 for (const node of vulnNodes) {
+                    if (seenIds.has(node.advisory.ghsaId)) continue;
+
                     if (isVersionAffected(dep.version, node.vulnerableVersionRange)) {
+                        seenIds.add(node.advisory.ghsaId);
                         matching.push({
                             id: node.advisory.ghsaId,
                             summary: node.advisory.summary,
@@ -145,16 +149,28 @@ export async function checkGhsaVulnerabilities(
     return results;
 }
 
+// Convert GHSA version range to SemVer-compatible range.
+function toSemverRange(ghsaRange: string): string {
+    return ghsaRange
+        .split(",")
+        .map(part => part.trim().replace(/\s+/g, ""))
+        .join(" ");
+}
+
 /**
- * Basic check for whether a package version falls within the affected range.
- * 
- * TODO: Use proper SemVer library for more accurate matching.
+ * Check if a version falls within the GHSA vulnerable range using proper SemVer.
  */
 function isVersionAffected(version: string, range: string | null | undefined): boolean {
     if (!range) return false;
 
-    if (range.includes(version)) return true;
-    if (range === "< " + version) return false;
+    const cleanVersion = semver.clean(version) || version;
 
-    return range.startsWith("<") || range.includes(", <");
+    if (!semver.valid(cleanVersion)) return false;
+
+    try {
+        const semverRange = toSemverRange(range);
+        return semver.satisfies(cleanVersion, semverRange);
+    } catch {
+        return range.includes(version);
+    }
 }
