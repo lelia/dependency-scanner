@@ -75,9 +75,10 @@ describe("filterIgnored", () => {
     const vulns = sampleVulns();
     const ignored = new Set(["GHSA-jf85-cpcp-j695"]);
 
-    const { filtered, ignoredCount } = filterIgnored(vulns, ignored);
+    const { filtered, ignoredCount, ignoredIds } = filterIgnored(vulns, ignored);
 
     assert.strictEqual(ignoredCount, 1);
+    assert.deepStrictEqual(ignoredIds, ["GHSA-jf85-cpcp-j695"]);
     const lodashVulns = filtered.get("npm:lodash@4.17.20");
     assert.strictEqual(lodashVulns?.length, 1);
     assert.strictEqual(lodashVulns?.[0].id, "GHSA-other-vuln");
@@ -87,9 +88,10 @@ describe("filterIgnored", () => {
     const vulns = sampleVulns();
     const ignored = new Set(["CVE-2021-23337"]);
 
-    const { filtered, ignoredCount } = filterIgnored(vulns, ignored);
+    const { filtered, ignoredCount, ignoredIds } = filterIgnored(vulns, ignored);
 
     assert.strictEqual(ignoredCount, 1);
+    assert.deepStrictEqual(ignoredIds, ["CVE-2021-23337"]);
     const lodashVulns = filtered.get("npm:lodash@4.17.20");
     assert.strictEqual(lodashVulns?.length, 1);
   });
@@ -98,9 +100,10 @@ describe("filterIgnored", () => {
     const vulns = sampleVulns();
     const ignored = new Set<string>();
 
-    const { filtered, ignoredCount } = filterIgnored(vulns, ignored);
+    const { filtered, ignoredCount, ignoredIds } = filterIgnored(vulns, ignored);
 
     assert.strictEqual(ignoredCount, 0);
+    assert.deepStrictEqual(ignoredIds, []);
     assert.strictEqual(filtered.get("npm:lodash@4.17.20")?.length, 2);
   });
 
@@ -108,9 +111,10 @@ describe("filterIgnored", () => {
     const vulns = sampleVulns();
     const ignored = new Set(["GHSA-express-vuln"]);
 
-    const { filtered, ignoredCount } = filterIgnored(vulns, ignored);
+    const { filtered, ignoredCount, ignoredIds } = filterIgnored(vulns, ignored);
 
     assert.strictEqual(ignoredCount, 1);
+    assert.deepStrictEqual(ignoredIds, ["GHSA-express-vuln"]);
     const expressVulns = filtered.get("npm:express@4.18.2");
     assert.strictEqual(expressVulns?.length, 0);
   });

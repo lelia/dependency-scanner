@@ -214,6 +214,20 @@ describe("generateReport", () => {
     assert.strictEqual(report.metadata.ignoredCount, 5);
   });
 
+  test("includes ignoredIds in metadata when provided", () => {
+    const graph = createTestGraph();
+    const vulns = new Map<string, Vulnerability[]>();
+    const metadataWithIgnored = {
+      ...testMetadata,
+      ignoredCount: 2,
+      ignoredIds: ["GHSA-xxxx", "CVE-2024-12345"],
+    };
+    
+    const report = generateReport(graph, vulns, metadataWithIgnored);
+
+    assert.deepStrictEqual(report.metadata.ignoredIds, ["GHSA-xxxx", "CVE-2024-12345"]);
+  });
+
   test("includes fixedIn in vulnerability findings", () => {
     const graph = createTestGraph();
     const vulns = createTestVulns();
