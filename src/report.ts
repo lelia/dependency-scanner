@@ -3,7 +3,7 @@
  */
 
 import { DependencyGraph, DependencyType } from "./types";
-import { Vulnerability } from "./osv";
+import { Vulnerability } from "./clients/types";
 import { getAllDependencies } from "./traverse";
 
 export interface Finding {
