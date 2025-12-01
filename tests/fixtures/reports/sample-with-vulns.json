@@ -3,7 +3,9 @@
     "scannedFile": "/path/to/project/package-lock.json",
     "sources": ["osv"],
     "timestamp": "2025-12-01T12:00:00.000Z",
-    "durationMs": 450
+    "durationMs": 450,
+    "ignoredCount": 1,
+    "ignoredIds": ["GHSA-p6mc-m468-83gw"]
   },
   "summary": {
     "totalDependencies": 5,

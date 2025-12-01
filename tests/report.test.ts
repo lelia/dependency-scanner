@@ -155,6 +155,15 @@ describe("report fixtures", () => {
     assert.deepStrictEqual(minimist.vulnerabilities[0].aliases, ["CVE-2021-44906"]);
   });
 
+  test("sample-with-vulns.json includes ignored metadata", () => {
+    const report: Report = JSON.parse(
+      fs.readFileSync(path.join(FIXTURES, "reports/sample-with-vulns.json"), "utf-8")
+    );
+
+    assert.strictEqual(report.metadata.ignoredCount, 1);
+    assert.deepStrictEqual(report.metadata.ignoredIds, ["GHSA-p6mc-m468-83gw"]);
+  });
+
   test("sample-no-vulns.json has zero vulnerable", () => {
     const report: Report = JSON.parse(
       fs.readFileSync(path.join(FIXTURES, "reports/sample-no-vulns.json"), "utf-8")
