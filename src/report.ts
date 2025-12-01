@@ -12,6 +12,7 @@ export interface ReportMetadata {
   timestamp: string;
   durationMs: number;
   ignoredCount?: number;
+  ignoredIds?: string[];
 }
 
 export interface Finding {
