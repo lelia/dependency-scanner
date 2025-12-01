@@ -123,7 +123,7 @@ Usage: `npm run test`
 
 Unit tests currently cover filetype parsers and database clients using fixture files.
 
-> 💡 Test coverage could be expanded with additional unit tests for the CLI, report generation and graph traversal. Integration tests could make API client testing more robust by introducing live network calls.
+> 💡 Test coverage could be expanded with additional unit tests for the CLI and graph traversal. Integration tests could make API client testing more robust by introducing live network calls.
 
 ### Test fixtures
 
@@ -135,6 +135,7 @@ tests/fixtures/
 ├── pypi/       # Python lockfile & manifest samples
 ├── osv/        # OSV.dev API response samples
 ├── ghsa/       # GHSA GraphQL response samples
+├── reports/    # Sample report.json outputs
 └── malformed/  # Edge cases for error handling
 ```
 
