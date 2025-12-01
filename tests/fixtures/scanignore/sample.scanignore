@@ -1,0 +1,9 @@
+# Sample .scanignore file for testing
+# Comments start with #
+
+GHSA-jf85-cpcp-j695
+CVE-2021-23337
+
+# Inline comments work too
+PYSEC-2021-76   # Known false positive
+
