@@ -132,9 +132,10 @@ Total Dependencies: 55  |  Vulnerable: 11 (20.0%)  |  Vulnerabilities Ignored: 4
 ⚠️  Vulnerable packages:
 
   minimist@1.2.5 (direct)
-    └─ 1 vuln(s): GHSA-xvch-5gv4-984h
+    └─ 1 vuln(s): GHSA-xvch-5gv4-984h (CVE-2021-44906)
 
 Full report: /path/to/project/report.json
+
 ⏱️  Completed in 0.58s
 ```
 
