@@ -43,6 +43,13 @@ describe("parse", () => {
       /ENOENT/
     );
   });
+
+  test("throws on empty file", () => {
+    assert.throws(
+      () => parse(path.join(FIXTURES, "malformed/empty-file.txt")),
+      /Unsupported file/
+    );
+  });
 });
 
 // npm registry tests
