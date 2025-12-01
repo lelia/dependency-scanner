@@ -1,15 +1,15 @@
 /**
- * Types for the dependency-scanner tool.
+ * Shared types for the dependency-scanner tool.
  */
 
 export type DependencyType = "direct" | "transitive";
-export type Ecosystem = "npm" | "pypi";
+export type PackageRegistry = "npm" | "pypi";
 
 export interface DependencyNode {
   id: string;
   name: string;
   version: string;
-  ecosystem: Ecosystem;
+  registry: PackageRegistry;
   dependencyType: DependencyType;
   dependencies: string[];
 }
