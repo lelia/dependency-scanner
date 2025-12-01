@@ -10,9 +10,7 @@ import { Vulnerability } from "./types";
 
 const OSV_BATCH_URL = "https://api.osv.dev/v1/querybatch";
 
-/**
- * Map our ecosystem to OSV ecosystem string.
- */
+// Map package registry name to OSV ecosystem string.
 function toOsvEcosystem(registry: PackageRegistry): string {
   switch (registry) {
     case "npm": return "npm";
